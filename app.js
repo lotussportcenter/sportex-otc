@@ -56,26 +56,44 @@ let charts = {};
 let latestFirebaseData = null;
 let currentCategory = "football";
 
+// Креирање почетни свеќици за нови тимови во Firebase
 function initializeFirebaseData(existingData) {
   const updates = {};
   let hasNewData = false;
+  const now = Date.now();
 
   Object.keys(categories).forEach(cat => {
     categories[cat].forEach(item => {
       const itemKey = item.replace(/[^a-zA-Z0-9]/g, '_');
-      if (!existingData || !existingData[itemKey]) {
+      if (!existingData || !existingData[itemKey] || !existingData[itemKey].candles) {
         hasNewData = true;
         const basePrice = parseFloat((Math.random() * (150 - 50) + 50).toFixed(2));
+        
+        let initialCandles = [];
+        let prevClose = basePrice;
+        for (let i = 8; i >= 1; i--) {
+          const open = prevClose;
+          const delta = (Math.random() * 0.8 - 0.4);
+          const close = parseFloat((open + delta).toFixed(2));
+          const high = parseFloat((Math.max(open, close) + Math.random() * 0.3).toFixed(2));
+          const low = parseFloat((Math.min(open, close) - Math.random() * 0.3).toFixed(2));
+          
+          initialCandles.push({
+            x: now - (i * 15000),
+            o: open,
+            h: high,
+            l: low,
+            c: close
+          });
+          prevClose = close;
+        }
+
         updates['prices/' + itemKey] = {
           name: item,
           category: cat,
           initialPrice: basePrice,
-          price: basePrice,
-          history: [
-            parseFloat((basePrice * 0.98).toFixed(2)),
-            parseFloat((basePrice * 0.99).toFixed(2)),
-            basePrice
-          ]
+          price: prevClose,
+          candles: initialCandles
         };
       }
     });
@@ -86,8 +104,16 @@ function initializeFirebaseData(existingData) {
   }
 }
 
-function showCategory(cat) {
+// Приказ на категоријата и креирање свеќичести графици
+function showCategory(cat, element) {
   currentCategory = cat;
+  
+  // Промена на активната класа за копчињата
+  if (element) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    element.classList.add('active');
+  }
+
   const div = document.getElementById("stocks");
   if (!div) return;
   div.innerHTML = "";
@@ -98,20 +124,14 @@ function showCategory(cat) {
   categories[cat].forEach(name => {
     const itemKey = name.replace(/[^a-zA-Z0-9]/g, '_');
     const container = document.createElement("div");
-    container.className = "stock";
-    container.style.padding = "15px";
-    container.style.margin = "10px 0";
-    container.style.border = "1px solid #333";
-    container.style.borderRadius = "8px";
-    container.style.backgroundColor = "#1a1a1a";
-    container.style.color = "#ffffff";
+    container.className = "stock-card";
     
     container.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="margin:0;">${name}</h3>
-        <span id="price_${itemKey}" style="font-weight:bold; color:#00ff88; font-size:1.1em;">Loading...</span>
+      <div class="stock-header">
+        <h3 class="stock-name">${name}</h3>
+        <span id="price_${itemKey}" class="stock-price">--.-- USDT</span>
       </div>
-      <div style="height: 150px; margin-top: 10px;">
+      <div class="chart-container">
         <canvas id="canvas_${itemKey}"></canvas>
       </div>
     `;
@@ -119,27 +139,43 @@ function showCategory(cat) {
 
     const ctx = document.getElementById(`canvas_${itemKey}`).getContext("2d");
     
-    const existingHistory = (latestFirebaseData && latestFirebaseData[itemKey] && latestFirebaseData[itemKey].history) 
-      ? latestFirebaseData[itemKey].history 
-      : [100, 102, 105];
+    const existingCandles = (latestFirebaseData && latestFirebaseData[itemKey] && latestFirebaseData[itemKey].candles) 
+      ? latestFirebaseData[itemKey].candles 
+      : [];
 
     charts[name] = new Chart(ctx, {
-      type: 'line',
+      type: 'candlestick',
       data: { 
-        labels: existingHistory.map((_, i) => `${i + 1}m`), 
         datasets: [{ 
           label: 'Price (USDT)', 
-          data: existingHistory, 
-          borderColor: '#007bff', 
-          fill: false, 
-          tension: 0.1 
+          data: existingCandles,
+          color: {
+            up: '#00ff88',
+            down: '#ff4949',
+            unchanged: '#888888',
+          }
         }] 
       },
       options: { 
         responsive: true,
         maintainAspectRatio: false,
         animation: false, 
-        scales: { x: { display: false }, y: { beginAtZero: false } } 
+        plugins: {
+          legend: { display: false }
+        },
+        scales: { 
+          x: { 
+            type: 'time',
+            time: { unit: 'second' },
+            ticks: { color: '#848e9c' },
+            grid: { color: '#1e2329' }
+          }, 
+          y: { 
+            beginAtZero: false,
+            ticks: { color: '#848e9c' },
+            grid: { color: '#1e2329' }
+          } 
+        } 
       }
     });
   });
@@ -149,6 +185,7 @@ function showCategory(cat) {
   }
 }
 
+// Ажурирање на UI цените
 function updateUIWithPrices(data) {
   if (!data) return;
   Object.keys(data).forEach(key => {
@@ -159,46 +196,61 @@ function updateUIWithPrices(data) {
       priceEl.innerText = `${item.price.toFixed(2)} USDT`;
     }
 
-    if (charts[item.name] && item.history) {
-      charts[item.name].data.labels = item.history.map((_, i) => `${i + 1}`);
-      charts[item.name].data.datasets[0].data = item.history;
+    if (charts[item.name] && item.candles) {
+      charts[item.name].data.datasets[0].data = item.candles;
       charts[item.name].update('none');
     }
   });
 }
 
+// Берзанска симулација на секои 15 секунди
 function startStockMarketSimulation() {
   setInterval(() => {
     if (!latestFirebaseData) return;
 
     const updates = {};
+    const now = Date.now();
 
     Object.keys(latestFirebaseData).forEach(key => {
       const item = latestFirebaseData[key];
       let currentPrice = item.price;
       const initialPrice = item.initialPrice || currentPrice;
 
-      const percentageChange = (Math.random() * 3 - 1.5) / 100;
-      let newPrice = currentPrice * (1 + percentageChange);
+      // Суптилна промена помеѓу -0.3% и +0.3%
+      const percentageChange = (Math.random() * 0.6 - 0.3) / 100;
+      let openPrice = currentPrice;
+      let closePrice = openPrice * (1 + percentageChange);
 
-      if (newPrice < 1.0) newPrice = 1.0;
+      if (closePrice < 1.0) closePrice = 1.0;
       const maxPrice = initialPrice * 3.0;
-      if (newPrice > maxPrice) newPrice = maxPrice;
+      if (closePrice > maxPrice) closePrice = maxPrice;
 
-      newPrice = parseFloat(newPrice.toFixed(2));
+      closePrice = parseFloat(closePrice.toFixed(2));
+      const highPrice = parseFloat((Math.max(openPrice, closePrice) + Math.random() * 0.15).toFixed(2));
+      const lowPrice = parseFloat((Math.min(openPrice, closePrice) - Math.random() * 0.15).toFixed(2));
 
-      let newHistory = item.history ? [...item.history] : [currentPrice];
-      newHistory.push(newPrice);
-      if (newHistory.length > 10) newHistory.shift();
+      let candles = item.candles ? [...item.candles] : [];
+      
+      candles.push({
+        x: now,
+        o: openPrice,
+        h: highPrice,
+        l: lowPrice,
+        c: closePrice
+      });
 
-      updates[`prices/${key}/price`] = newPrice;
-      updates[`prices/${key}/history`] = newHistory;
+      if (candles.length > 12) {
+        candles.shift();
+      }
+
+      updates[`prices/${key}/price`] = closePrice;
+      updates[`prices/${key}/candles`] = candles;
       updates[`prices/${key}/initialPrice`] = initialPrice;
     });
 
     update(ref(db), updates);
 
-  }, 4500);
+  }, 15000);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
