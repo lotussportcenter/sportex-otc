@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD5XFfRfOO-OsVOYtmZmZtHegKyxDZEW4s",
@@ -189,14 +189,14 @@ function checkAndAutoFillDatabase(existingData) {
       
       for (let i = 10; i >= 1; i--) {
         const open = prevClose;
-        const delta = parseFloat(((Math.random() - 0.49) * 0.05).toFixed(2));
+        const delta = parseFloat(((Math.random() - 0.48) * 0.4).toFixed(2));
         let close = parseFloat((open + delta).toFixed(2));
         
         if (close < itemObj.min) close = itemObj.min;
         if (close > itemObj.max) close = itemObj.max;
 
-        const high = parseFloat((Math.max(open, close) + 0.02).toFixed(2));
-        const low = parseFloat((Math.max(itemObj.min, Math.min(open, close) - 0.02)).toFixed(2));
+        const high = parseFloat((Math.max(open, close) + 0.15).toFixed(2));
+        const low = parseFloat((Math.max(itemObj.min, Math.min(open, close) - 0.15)).toFixed(2));
         
         initialCandles.push({
           x: now - (i * CANDLE_INTERVAL_MS),
@@ -271,7 +271,7 @@ function showCategory(cat, element) {
       options: { 
         responsive: true,
         maintainAspectRatio: false,
-        animation: false, 
+        animation: { duration: 300 }, // Вклучена мазна анимација на секое освежување
         plugins: { legend: { display: false } },
         scales: { 
           x: { 
@@ -314,12 +314,11 @@ function updateUIWithPrices(data) {
 
     if (charts[item.name] && item.candles) {
       charts[item.name].data.datasets[0].data = item.candles;
-      charts[item.name].update('none');
+      charts[item.name].update(); // Ажурирање со мазна анимација за видливо мрдање
     }
   });
 }
 
-// ЕДЕН ГЛАВЕН ТАБ (MASTER) ГИ МЕНУВА ЦЕНИТЕ НА СЕКОИ 5 СЕКУНДИ ЗА ДА ИМААТ СИТЕ ИСТИ ЦЕНИ
 function startMasterSimulation() {
   setInterval(() => {
     if (!latestFirebaseData) return;
@@ -333,7 +332,8 @@ function startMasterSimulation() {
       const item = latestFirebaseData[key];
       if (!item) return;
 
-      const change = parseFloat(((Math.random() - 0.49) * 0.08).toFixed(2));
+      // Поголеми и видливи промени на цената на секои 5 секунди
+      const change = parseFloat(((Math.random() - 0.48) * 0.5).toFixed(2));
       let openPrice = item.price;
       let closePrice = parseFloat((openPrice + change).toFixed(2));
 
@@ -344,8 +344,8 @@ function startMasterSimulation() {
       let lastCandleTime = item.lastCandleTime || now;
 
       if (candles.length === 0 || (now - lastCandleTime >= CANDLE_INTERVAL_MS)) {
-        const highPrice = parseFloat((Math.max(openPrice, closePrice) + 0.02).toFixed(2));
-        const lowPrice = parseFloat((Math.max(item.min || 1.0, Math.min(openPrice, closePrice) - 0.02)).toFixed(2));
+        const highPrice = parseFloat((Math.max(openPrice, closePrice) + 0.15).toFixed(2));
+        const lowPrice = parseFloat((Math.max(item.min || 1.0, Math.min(openPrice, closePrice) - 0.15)).toFixed(2));
 
         candles.push({ x: now, o: openPrice, h: highPrice, l: lowPrice, c: closePrice });
         if (candles.length > 25) candles.shift();
@@ -364,7 +364,7 @@ function startMasterSimulation() {
     });
 
     update(ref(db, 'prices'), updates);
-  }, 5000); // Секои 5 секунди сите добиваат синхронизирана нова промена низ цела мрежа
+  }, 5000); // Точно на секои 5 секунди сите свеќи и цени мрдаат живо
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -382,7 +382,6 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Ја палиме симулацијата (автоматски ги освежува цените во базата на 5 сек за сите)
   startMasterSimulation();
 });
 
