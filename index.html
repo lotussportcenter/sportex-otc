@@ -6,7 +6,7 @@
   <title>SportEx OTC Exchange | Institutional Sports Desk</title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- Chart.js + Financial Candlestick Plugin -->
+  <!-- Chart.js + Date Adapter + Financial Candlestick Plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1/build/global/luxon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0/dist/chartjs-adapter-luxon.min.js"></script>
@@ -14,17 +14,17 @@
 </head>
 <body>
 
-  <!-- Top Navigation Header -->
+  <!-- Top Navigation Bar -->
   <header class="navbar">
     <div class="logo-container">
-      <div class="logo-icon">SX</div>
+      <div class="logo-badge">SX</div>
       <div>
         <h1>SportEx <span>OTC</span></h1>
         <p class="subtitle">Institutional Sports Stock Exchange</p>
       </div>
     </div>
     <div class="market-status">
-      <span class="status-dot"></span> MARKET OPEN (24/7)
+      <span class="status-dot"></span> LIVE OTC MARKET (24/7)
     </div>
   </header>
 
@@ -33,8 +33,8 @@
     <!-- Professional OTC Info Desk Panel -->
     <section class="otc-panel">
       <div class="panel-header">
-        <h2>Global OTC Institutional Desk</h2>
-        <span class="badge">Direct Liquidity</span>
+        <h2>Global OTC Institutional Trading Desk</h2>
+        <span class="badge">Direct Liquidity Access</span>
       </div>
 
       <div class="contact-strip">
@@ -47,7 +47,7 @@
           <span class="value">✉️ otcdesk@exoraglobalmk.com</span>
         </div>
         <div class="contact-item">
-          <span class="label">Settlement Currency:</span>
+          <span class="label">Settlement Unit:</span>
           <span class="value">💲 USDT (1 USDT = $1.00 USD)</span>
         </div>
       </div>
@@ -58,7 +58,7 @@
         <div class="info-card">
           <h3>Execution & Benefits</h3>
           <ul>
-            <li><strong>Zero Price Slippage:</strong> Block trades execute at an exact agreed rate without order book impact.</li>
+            <li><strong>Zero Price Slippage:</strong> Block trades execute at an exact agreed rate without public order book impact.</li>
             <li><strong>Institutional Privacy:</strong> Trades remain off public ledgers to safeguard proprietary trading strategies.</li>
             <li><strong>Dedicated Coverage:</strong> Tailored liquidity quotes and direct settlement support from specialized traders.</li>
           </ul>
@@ -67,36 +67,36 @@
         <div class="info-card">
           <h3>Trading Workflow</h3>
           <ol>
-            <li><strong>Request Quote:</strong> Submit desired asset and volume to the OTC Desk.</li>
+            <li><strong>Request Quote:</strong> Submit desired asset and volume directly to the OTC Desk.</li>
             <li><strong>Price Lock:</strong> Receive a firm, binding all-in price quote based on live market depth.</li>
-            <li><strong>Instant Settlement:</strong> Secure peer-to-peer asset delivery upon confirmation.</li>
+            <li><strong>Instant Settlement:</strong> Secure peer-to-peer asset delivery upon trade confirmation.</li>
           </ol>
         </div>
 
         <div class="info-card fee-card">
           <h3>Commission & Guarantees</h3>
           <div class="fee-row">
-            <span>Buy Orders:</span>
+            <span>Buy Orders Fee:</span>
             <strong>2.5% Commission</strong>
           </div>
           <div class="fee-row">
-            <span>Sell Orders:</span>
+            <span>Sell Orders Fee:</span>
             <strong>1.5% Commission</strong>
           </div>
-          <p class="legal-guarantee">✓ The OTC Desk is legally bound to execute and guarantee client asset payouts.</p>
+          <p class="legal-guarantee">✓ The OTC Desk has a strict legal obligation to fulfill and execute client payouts.</p>
         </div>
       </div>
 
       <div class="disclaimer-box">
-        <p><strong>Regulatory Notice:</strong> U.S. OTC trading desks operate under FinCEN registration as Money Services Businesses (MSBs), strictly adhering to the Bank Secrecy Act (BSA) and Anti-Money Laundering (AML) standards, as well as applicable State Money Transmitter Licenses (MTLs). Digital asset securities transactions comply with SEC frameworks to ensure complete counterparty protection and payout integrity.</p>
+        <p><strong>Regulatory Compliance Notice:</strong> U.S. OTC trading desks operate under FinCEN registration as Money Services Businesses (MSBs), strictly adhering to the Bank Secrecy Act (BSA) and Anti-Money Laundering (AML) standards, as well as applicable State Money Transmitter Licenses (MTLs). Digital asset securities transactions comply with SEC frameworks to ensure complete counterparty protection and payout integrity.</p>
       </div>
     </section>
 
-    <!-- Market Navigation Categories -->
+    <!-- Market Navigation Board -->
     <section class="market-section">
       <div class="section-title">
-        <h2>Live Market Board</h2>
-        <p>Select asset class to view live candlestick price action</p>
+        <h2>Institutional Market Board</h2>
+        <p>Select asset class to view live candlestick price charts</p>
       </div>
 
       <div class="category-tabs">
@@ -107,14 +107,14 @@
         <button class="tab-btn" onclick="showCategory('players', this)">⭐ Players</button>
       </div>
 
-      <!-- Asset Grid -->
+      <!-- Asset Grid Container -->
       <div id="stocks" class="stock-grid"></div>
     </section>
 
   </main>
 
   <footer class="footer">
-    <p>&copy; 2026 SportEx OTC Exchange. All rights reserved. Institutional Grade Sports Assets.</p>
+    <p>&copy; 2026 SportEx OTC Exchange. All rights reserved. Professional Grade Sports Assets Platform.</p>
   </footer>
 
   <script type="module" src="app.js"></script>
