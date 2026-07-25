@@ -3,13 +3,15 @@
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   background-color: #0b0e11;
-  color: #eaedd1;
   color: #e1e3e6;
   line-height: 1.5;
+  overflow-x: hidden;
+  font-size: 14px;
 }
 
 /* Header Navbar */
@@ -18,8 +20,10 @@ body {
   justify-content: space-between;
   align-items: center;
   background-color: #181a20;
-  padding: 16px 32px;
+  padding: 12px 20px;
   border-bottom: 1px solid #2b2f36;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .logo-container {
@@ -32,14 +36,14 @@ body {
   background: #00ff88;
   color: #0b0e11;
   font-weight: 800;
-  font-size: 1.2rem;
-  padding: 8px 12px;
+  font-size: 1.1rem;
+  padding: 6px 10px;
   border-radius: 6px;
   letter-spacing: 1px;
 }
 
 .navbar h1 {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   color: #ffffff;
   letter-spacing: 0.5px;
 }
@@ -49,18 +53,17 @@ body {
 }
 
 .subtitle {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: #848e9c;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .market-status {
   background: #1e2329;
   border: 1px solid #2b2f36;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #00ff88;
   display: flex;
   align-items: center;
@@ -74,13 +77,20 @@ body {
   background-color: #00ff88;
   border-radius: 50%;
   box-shadow: 0 0 8px #00ff88;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
 /* Main Container */
 .main-container {
-  max-width: 1350px;
-  margin: 25px auto;
-  padding: 0 20px;
+  max-width: 1400px;
+  margin: 20px auto;
+  padding: 0 15px;
 }
 
 /* OTC Desk Panel */
@@ -88,19 +98,22 @@ body {
   background: #181a20;
   border: 1px solid #2b2f36;
   border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 30px;
+  padding: 20px;
+  margin-bottom: 25px;
+  word-wrap: break-word;
 }
 
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .panel-header h2 {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   color: #ffffff;
 }
 
@@ -115,19 +128,27 @@ body {
 
 .contact-strip {
   display: flex;
-  gap: 25px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
   background: #0b0e11;
-  padding: 14px 18px;
+  padding: 14px;
   border-radius: 8px;
   margin-bottom: 20px;
   border: 1px solid #2b2f36;
 }
 
+@media (min-width: 768px) {
+  .contact-strip {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
 .contact-item {
   display: flex;
-  gap: 8px;
-  font-size: 0.9rem;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.85rem;
 }
 
 .contact-item .label {
@@ -137,6 +158,7 @@ body {
 .contact-item .value {
   color: #ffffff;
   font-weight: 600;
+  word-break: break-all;
 }
 
 .divider {
@@ -149,22 +171,22 @@ body {
 /* Info Grid */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
   margin-bottom: 20px;
 }
 
 .info-card {
   background: #1e2329;
-  padding: 18px;
+  padding: 16px;
   border-radius: 8px;
   border: 1px solid #2b2f36;
 }
 
 .info-card h3 {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: #f0b90b;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   border-bottom: 1px solid #2b2f36;
   padding-bottom: 6px;
   text-transform: uppercase;
@@ -173,7 +195,7 @@ body {
 
 .info-card ul, .info-card ol {
   padding-left: 18px;
-  font-size: 0.85rem;
+  font-size: 0.83rem;
   color: #b7bdc6;
 }
 
@@ -186,20 +208,20 @@ body {
   justify-content: space-between;
   padding: 8px 0;
   border-bottom: 1px solid #2b2f36;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #b7bdc6;
 }
 
 .legal-guarantee {
-  margin-top: 15px;
-  font-size: 0.82rem;
+  margin-top: 12px;
+  font-size: 0.8rem;
   color: #00ff88;
   font-weight: 500;
   line-height: 1.4;
 }
 
 .disclaimer-box {
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   color: #848e9c;
   background: #121418;
   padding: 12px;
@@ -210,7 +232,7 @@ body {
 
 /* Market Section */
 .market-section {
-  margin-top: 30px;
+  margin-top: 25px;
 }
 
 .section-title {
@@ -218,32 +240,37 @@ body {
 }
 
 .section-title h2 {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   color: #fff;
 }
 
 .section-title p {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #848e9c;
 }
 
 /* Category Tabs */
 .category-tabs {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 20px;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #2b2f36 transparent;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tab-btn {
   background: #1e2329;
   border: 1px solid #2b2f36;
   color: #b7bdc6;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 
@@ -261,57 +288,75 @@ body {
 /* Stock Grid */
 .stock-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 15px;
+}
+
+@media (max-width: 480px) {
+  .stock-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stock-card {
   background: #181a20;
   border: 1px solid #2b2f36;
   border-radius: 10px;
-  padding: 18px;
-  transition: transform 0.2s, border-color 0.2s;
+  padding: 16px;
+  transition: border-color 0.2s, transform 0.2s;
 }
 
 .stock-card:hover {
   border-color: #474d57;
-  transform: translateY(-2px);
 }
 
 .stock-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
+  gap: 10px;
 }
 
 .stock-name {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   color: #fff;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stock-price {
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #00ff88;
   background: #0b2e1f;
-  padding: 4px 10px;
+  padding: 4px 8px;
   border-radius: 6px;
   border: 1px solid #005c30;
+  white-space: nowrap;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.stock-price.down {
+  color: #ff4949;
+  background: #361414;
+  border-color: #6e1c1c;
 }
 
 .chart-container {
-  height: 200px;
+  height: 180px;
   position: relative;
+  width: 100%;
 }
 
 /* Footer */
 .footer {
   text-align: center;
-  padding: 30px;
+  padding: 25px 15px;
   color: #848e9c;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   border-top: 1px solid #2b2f36;
-  margin-top: 50px;
+  margin-top: 40px;
 }
