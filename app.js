@@ -56,21 +56,24 @@ let charts = {};
 let latestFirebaseData = null;
 let currentCategory = "football";
 
+// Креира почетни податоци за свеќици доколку базата е празна
 function initializeFirebaseData(existingData) {
   const updates = {};
-  let hasNewData = false;
+  let needsUpdate = false;
   const now = Date.now();
 
   Object.keys(categories).forEach(cat => {
     categories[cat].forEach(item => {
       const itemKey = item.replace(/[^a-zA-Z0-9]/g, '_');
       if (!existingData || !existingData[itemKey] || !existingData[itemKey].candles) {
-        hasNewData = true;
-        const basePrice = parseFloat((Math.random() * (150 - 50) + 50).toFixed(2));
+        needsUpdate = true;
+        const basePrice = parseFloat((Math.random() * (120 - 40) + 40).toFixed(2));
         
         let initialCandles = [];
         let prevClose = basePrice;
-        for (let i = 8; i >= 1; i--) {
+        
+        // 10 почетни свеќици во минатото
+        for (let i = 10; i >= 1; i--) {
           const open = prevClose;
           const delta = parseFloat((Math.random() * 0.6 - 0.3).toFixed(2));
           const close = parseFloat((open + delta).toFixed(2));
@@ -98,11 +101,12 @@ function initializeFirebaseData(existingData) {
     });
   });
 
-  if (hasNewData) {
+  if (needsUpdate) {
     update(ref(db), updates);
   }
 }
 
+// Приказ на избраната категорија
 function showCategory(cat, element) {
   currentCategory = cat;
   
@@ -163,7 +167,8 @@ function showCategory(cat, element) {
         scales: { 
           x: { 
             type: 'time',
-            ticks: { color: '#848e9c' },
+            time: { unit: 'second' },
+            ticks: { color: '#848e9c', maxTicksLimit: 5 },
             grid: { color: '#1e2329' }
           }, 
           y: { 
@@ -181,6 +186,7 @@ function showCategory(cat, element) {
   }
 }
 
+// Го ажурира корисничкиот интерфејс и графиците
 function updateUIWithPrices(data) {
   if (!data) return;
   Object.keys(data).forEach(key => {
@@ -198,7 +204,7 @@ function updateUIWithPrices(data) {
   });
 }
 
-// ПРОМЕНА НА СЕКОИ 15 СЕКУНДИ (ПОБАВНО И РЕАЛНО)
+// СИМУЛАЦИЈА НА БЕРЗА - Секои 15 секунди
 function startStockMarketSimulation() {
   setInterval(() => {
     if (!latestFirebaseData) return;
@@ -211,18 +217,16 @@ function startStockMarketSimulation() {
       let currentPrice = item.price;
       const initialPrice = item.initialPrice || currentPrice;
 
-      // Многу мала и реална промена
-      const percentageChange = (Math.random() * 0.4 - 0.2) / 100;
+      // Мала промена (-0.3% до +0.3%)
+      const percentageChange = (Math.random() * 0.6 - 0.3) / 100;
       let openPrice = currentPrice;
       let closePrice = openPrice * (1 + percentageChange);
 
       if (closePrice < 1.0) closePrice = 1.0;
-      const maxPrice = initialPrice * 3.0;
-      if (closePrice > maxPrice) closePrice = maxPrice;
-
       closePrice = parseFloat(closePrice.toFixed(2));
-      const highPrice = parseFloat((Math.max(openPrice, closePrice) + Math.random() * 0.1).toFixed(2));
-      const lowPrice = parseFloat((Math.min(openPrice, closePrice) - Math.random() * 0.1).toFixed(2));
+
+      const highPrice = parseFloat((Math.max(openPrice, closePrice) + Math.random() * 0.15).toFixed(2));
+      const lowPrice = parseFloat((Math.min(openPrice, closePrice) - Math.random() * 0.15).toFixed(2));
 
       let candles = item.candles ? [...item.candles] : [];
       
@@ -234,7 +238,8 @@ function startStockMarketSimulation() {
         c: closePrice
       });
 
-      if (candles.length > 12) {
+      // Чувај максимум 15 свеќици на графикот
+      if (candles.length > 15) {
         candles.shift();
       }
 
@@ -245,7 +250,7 @@ function startStockMarketSimulation() {
 
     update(ref(db), updates);
 
-  }, 15000); // Секои 15 секунди
+  }, 15000); // 15 секунди
 }
 
 window.addEventListener("DOMContentLoaded", () => {
