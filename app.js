@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD5XFfRfOO-OsVOYtmZmZtHegKyxDZEW4s",
@@ -15,7 +15,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// РЕАЛНИ БЕРЗАНСКИ ЦЕНИ И ОПСЕЗИ (RANGE)
 const categories = {
   football: [
     { name: "Real Madrid", base: 185.50, min: 140, max: 280 },
@@ -175,72 +174,60 @@ const categories = {
 let charts = {};
 let latestFirebaseData = null;
 let currentCategory = "football";
-let state = {};
+const CANDLE_INTERVAL_MS = 60000;
 
-const CANDLE_INTERVAL_MS = 60000; // Нова свеќичка на секоја минута
-
-// Локална симулација што генерално го прати секој клиент за мазна анимација
-function getDeterministicPrice(itemObj, now) {
-  const seed = now / 12000;
-  const hash = Math.sin(seed * 9999 + itemObj.base) * 10000;
-  const delta = ((hash - Math.floor(hash)) - 0.49) * 0.04;
-  
-  if (!state[itemObj.name]) {
-    state[itemObj.name] = itemObj.base;
-  }
-
-  let nextPrice = parseFloat((state[itemObj.name] + delta).toFixed(2));
-  
-  // Внимавај на границите (Range limits)
-  if (nextPrice < itemObj.min) nextPrice = itemObj.min;
-  if (nextPrice > itemObj.max) nextPrice = itemObj.max;
-
-  state[itemObj.name] = nextPrice;
-  return nextPrice;
-}
-
-function generateLocalDataset(cat) {
+function initializeFirebaseData(existingData) {
+  const updates = {};
+  let needsUpdate = false;
   const now = Date.now();
-  const result = {};
 
-  categories[cat].forEach(itemObj => {
-    const itemKey = itemObj.name.replace(/[^a-zA-Z0-9]/g, '_');
-    let prevClose = itemObj.base;
-    let candles = [];
+  Object.keys(categories).forEach(cat => {
+    categories[cat].forEach(itemObj => {
+      const itemKey = itemObj.name.replace(/[^a-zA-Z0-9]/g, '_');
+      if (!existingData || !existingData[itemKey] || !existingData[itemKey].candles) {
+        needsUpdate = true;
+        let initialCandles = [];
+        let prevClose = itemObj.base;
+        
+        for (let i = 10; i >= 1; i--) {
+          const open = prevClose;
+          const delta = parseFloat(((Math.random() - 0.49) * 0.05).toFixed(2));
+          let close = parseFloat((open + delta).toFixed(2));
+          
+          if (close < itemObj.min) close = itemObj.min;
+          if (close > itemObj.max) close = itemObj.max;
 
-    for (let i = 10; i >= 1; i--) {
-      const open = prevClose;
-      const delta = parseFloat(((Math.random() - 0.49) * 0.05).toFixed(2));
-      let close = parseFloat((open + delta).toFixed(2));
-      
-      if (close < itemObj.min) close = itemObj.min;
-      if (close > itemObj.max) close = itemObj.max;
+          const high = parseFloat((Math.max(open, close) + 0.02).toFixed(2));
+          const low = parseFloat((Math.max(itemObj.min, Math.min(open, close) - 0.02)).toFixed(2));
+          
+          initialCandles.push({
+            x: now - (i * CANDLE_INTERVAL_MS),
+            o: open,
+            h: high,
+            l: low,
+            c: close
+          });
+          prevClose = close;
+        }
 
-      const high = parseFloat((Math.max(open, close) + 0.02).toFixed(2));
-      const low = parseFloat((Math.max(itemObj.min, Math.min(open, close) - 0.02)).toFixed(2));
-
-      candles.push({
-        x: now - (i * CANDLE_INTERVAL_MS),
-        o: open,
-        h: high,
-        l: low,
-        c: close
-      });
-      prevClose = close;
-    }
-
-    result[itemKey] = {
-      name: itemObj.name,
-      price: prevClose,
-      prevPrice: prevClose,
-      candles: candles,
-      min: itemObj.min,
-      max: itemObj.max,
-      base: itemObj.base
-    };
+        updates[itemKey] = {
+          name: itemObj.name,
+          category: cat,
+          price: prevClose,
+          prevPrice: prevClose,
+          candles: initialCandles,
+          min: itemObj.min,
+          max: itemObj.max,
+          base: itemObj.base,
+          lastCandleTime: now
+        };
+      }
+    });
   });
 
-  return result;
+  if (needsUpdate) {
+    update(ref(db, 'prices'), updates);
+  }
 }
 
 function showCategory(cat, element) {
@@ -257,8 +244,6 @@ function showCategory(cat, element) {
   charts = {};
 
   if (!categories[cat]) return;
-
-  const currentDataset = latestFirebaseData || generateLocalDataset(cat);
 
   categories[cat].forEach(itemObj => {
     const name = itemObj.name;
@@ -278,9 +263,8 @@ function showCategory(cat, element) {
     div.appendChild(container);
 
     const ctx = document.getElementById(`canvas_${itemKey}`).getContext("2d");
-    
-    const existingCandles = (currentDataset && currentDataset[itemKey] && currentDataset[itemKey].candles) 
-      ? currentDataset[itemKey].candles 
+    const existingCandles = (latestFirebaseData && latestFirebaseData[itemKey] && latestFirebaseData[itemKey].candles) 
+      ? latestFirebaseData[itemKey].candles 
       : [];
 
     charts[name] = new Chart(ctx, {
@@ -300,9 +284,7 @@ function showCategory(cat, element) {
         responsive: true,
         maintainAspectRatio: false,
         animation: false, 
-        plugins: {
-          legend: { display: false }
-        },
+        plugins: { legend: { display: false } },
         scales: { 
           x: { 
             type: 'time',
@@ -320,7 +302,9 @@ function showCategory(cat, element) {
     });
   });
 
-  updateUIWithPrices(currentDataset);
+  if (latestFirebaseData) {
+    updateUIWithPrices(latestFirebaseData);
+  }
 }
 
 function updateUIWithPrices(data) {
@@ -348,57 +332,83 @@ function updateUIWithPrices(data) {
   });
 }
 
-// Локален мирен мотор за приказ без потреба од директно пишување во базата
-function startSmoothDisplayEngine() {
+// Заедничка синхронизирана симулација која ги запишува промените во Firebase
+function startSharedMarketSimulation() {
   setInterval(() => {
-    if (!categories[currentCategory]) return;
+    if (!latestFirebaseData) return;
+
+    // Избираме еден случаен тикер за промена на секои 12 секунди за да биде стабилно
+    const allKeys = Object.keys(latestFirebaseData);
+    if (allKeys.length === 0) return;
+
+    const randomKey = allKeys[Math.floor(Math.random() * allKeys.length)];
+    const item = latestFirebaseData[randomKey];
+    if (!item) return;
 
     const now = Date.now();
-    const activeDataset = latestFirebaseData || {};
+    let currentPrice = item.price;
+    const change = parseFloat(((Math.random() - 0.49) * 0.04).toFixed(2));
+    let openPrice = currentPrice;
+    let closePrice = parseFloat((openPrice + change).toFixed(2));
 
-    categories[currentCategory].forEach(itemObj => {
-      const itemKey = itemObj.name.replace(/[^a-zA-Z0-9]/g, '_');
-      const itemData = activeDataset[itemKey] || {
-        name: itemObj.name,
-        price: itemObj.base,
-        prevPrice: itemObj.base,
-        candles: []
-      };
+    if (item.min && closePrice < item.min) closePrice = item.min;
+    if (item.max && closePrice > item.max) closePrice = item.max;
 
-      let openPrice = itemData.price;
-      let closePrice = getDeterministicPrice(itemObj, now);
+    let candles = item.candles ? [...item.candles] : [];
+    let lastCandleTime = item.lastCandleTime || now;
 
-      itemData.prevPrice = openPrice;
-      itemData.price = closePrice;
+    if (candles.length === 0 || (now - lastCandleTime >= CANDLE_INTERVAL_MS)) {
+      const highPrice = parseFloat((Math.max(openPrice, closePrice) + 0.02).toFixed(2));
+      const lowPrice = parseFloat((Math.max(item.min || 1.0, Math.min(openPrice, closePrice) - 0.02)).toFixed(2));
 
-      if (itemData.candles && itemData.candles.length > 0) {
-        let lastCandle = itemData.candles[itemData.candles.length - 1];
-        lastCandle.c = closePrice;
-        lastCandle.h = parseFloat(Math.max(lastCandle.h, closePrice).toFixed(2));
-        lastCandle.l = parseFloat(Math.min(lastCandle.l, closePrice).toFixed(2));
-      }
+      candles.push({
+        x: now,
+        o: openPrice,
+        h: highPrice,
+        l: lowPrice,
+        c: closePrice
+      });
 
-      activeDataset[itemKey] = itemData;
-    });
+      if (candles.length > 15) candles.shift();
+      updatesTime(randomKey, now);
+    } else {
+      let currentCandle = candles[candles.length - 1];
+      currentCandle.c = closePrice;
+      currentCandle.h = parseFloat(Math.max(currentCandle.h, closePrice).toFixed(2));
+      currentCandle.l = parseFloat(Math.min(currentCandle.l, closePrice).toFixed(2));
+      candles[candles.length - 1] = currentCandle;
+    }
 
-    updateUIWithPrices(activeDataset);
-  }, 12000); // Дискретни промени на 12 секунди
+    const updates = {};
+    updates[`prices/${randomKey}/prevPrice`] = openPrice;
+    updates[`prices/${randomKey}/price`] = closePrice;
+    updates[`prices/${randomKey}/candles`] = candles;
+
+    update(ref(db), updates);
+
+  }, 12000);
+}
+
+function updatesTime(randomKey, now) {
+  update(ref(db), { [`prices/${randomKey}/lastCandleTime`]: now });
 }
 
 window.addEventListener("DOMContentLoaded", () => {
   showCategory("football");
 
-  // Читај во реално време од заштитената база
   const dbRef = ref(db, 'prices');
   onValue(dbRef, (snapshot) => {
     const data = snapshot.val();
-    if (data) {
+    if (!data) {
+      initializeFirebaseData(null);
+    } else {
       latestFirebaseData = data;
+      initializeFirebaseData(data);
       updateUIWithPrices(data);
     }
   });
 
-  startSmoothDisplayEngine();
+  startSharedMarketSimulation();
 });
 
 window.showCategory = showCategory;
