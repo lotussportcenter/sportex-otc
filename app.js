@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // Firebase Конфигурација
 const firebaseConfig = {
@@ -13,11 +13,11 @@ const firebaseConfig = {
   measurementId: "G-3H2H9V3ZZF"
 };
 
-// Иницијализација на Firebase
+// Иницијализација
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Сите ваши категории, лиги, тимови и играчи
+// Категории и тимови
 const categories = {
   football: [
     "Arsenal", "Manchester City", "Manchester United", "Aston Villa", "Liverpool", "Chelsea", "Newcastle",
@@ -55,33 +55,26 @@ const categories = {
   ]
 };
 
-// Избрани топ 30 за SportEx 30 Index
-const sportex30List = [
-  "Real Madrid", "Barcelona", "Manchester City", "Liverpool", "Bayern Munich", "Paris Saint-Germain",
-  "Boston Celtics", "Los Angeles Lakers", "Golden State Warriors", "Denver Nuggets", "Kansas City Chiefs", "San Francisco 49ers",
-  "Lionel Messi", "Cristiano Ronaldo", "Kylian Mbappe", "Erling Haaland", "Nikola Jokic", "Luka Doncic",
-  "Arsenal", "Inter", "Juventus", "Milwaukee Bucks", "Philadelphia 76ers", "Dallas Cowboys", "Philadelphia Eagles",
-  "Edmonton Oilers", "Florida Panthers", "Victor Wembanyama", "Lamine Yamal", "Vinicius Junior"
-];
-
 let charts = {};
+let latestFirebaseData = null;
+let currentCategory = "football";
 
-// Генерирање и запишување на сите нови тимови во Firebase Realtime Database
+// Креирање на почетни цени за сите тимови доколку ги нема во Firebase
 function initializeFirebaseData(existingData) {
   Object.keys(categories).forEach(cat => {
     categories[cat].forEach(item => {
       const itemKey = item.replace(/\s+/g, '_');
       if (!existingData || !existingData[itemKey]) {
-        // Рандом почетна цена помеѓу 80 и 250 USDT
-        const initialPrice = parseFloat((Math.random() * (250 - 80) + 80).toFixed(2));
+        const basePrice = parseFloat((Math.random() * (150 - 50) + 50).toFixed(2));
         set(ref(db, 'prices/' + itemKey), {
           name: item,
           category: cat,
-          price: initialPrice,
+          initialPrice: basePrice, // Се чува за да не премина над +200%
+          price: basePrice,
           history: [
-            parseFloat((initialPrice * 0.98).toFixed(2)),
-            parseFloat((initialPrice * 0.99).toFixed(2)),
-            initialPrice
+            parseFloat((basePrice * 0.98).toFixed(2)),
+            parseFloat((basePrice * 0.99).toFixed(2)),
+            basePrice
           ]
         });
       }
@@ -89,8 +82,9 @@ function initializeFirebaseData(existingData) {
   });
 }
 
-// Прикажи ги сите картички со графици за избраната категорија
+// Прикажување на картички и графици за избраната категорија
 function showCategory(cat) {
+  currentCategory = cat;
   const div = document.getElementById("stocks");
   if (!div) return;
   div.innerHTML = "";
@@ -99,6 +93,7 @@ function showCategory(cat) {
   if (!categories[cat]) return;
 
   categories[cat].forEach(name => {
+    const itemKey = name.replace(/\s+/g, '_');
     const container = document.createElement("div");
     container.className = "stock";
     container.style.padding = "15px";
@@ -109,48 +104,125 @@ function showCategory(cat) {
     container.style.color = "#ffffff";
     
     container.innerHTML = `
-      <div style="display:flex; justify-between; align-items:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
         <h3>${name}</h3>
-        <span id="price_${name.replace(/\s+/g,'_')}" style="font-weight:bold; color:#00ff88;">Loading...</span>
+        <span id="price_${itemKey}" style="font-weight:bold; color:#00ff88; font-size:1.1em;">Loading...</span>
       </div>
-      <canvas id="${name.replace(/\s+/g,'_')}"></canvas>
+      <canvas id="${itemKey}"></canvas>
     `;
     div.appendChild(container);
 
-    const ctx = document.getElementById(name.replace(/\s+/g,'_')).getContext("2d");
+    const ctx = document.getElementById(itemKey).getContext("2d");
+    
+    // Вчитување на историските податоци од Firebase за графикот
+    const existingHistory = (latestFirebaseData && latestFirebaseData[itemKey] && latestFirebaseData[itemKey].history) 
+      ? latestFirebaseData[itemKey].history 
+      : [100, 102, 105];
+
     charts[name] = new Chart(ctx, {
       type: 'line',
       data: { 
-        labels: ['10m ago', '5m ago', 'Now'], 
-        datasets: [{ label: 'Price (USDT)', data: [100, 102, 105], borderColor: '#007bff', fill: false, tension: 0.1 }] 
+        labels: existingHistory.map((_, i) => `${i + 1}m`), 
+        datasets: [{ 
+          label: 'Price (USDT)', 
+          data: existingHistory, 
+          borderColor: '#007bff', 
+          fill: false, 
+          tension: 0.1 
+        }] 
       },
-      options: { animation: false, scales: { x: { display: true }, y: { beginAtZero: false } } }
+      options: { animation: false, scales: { x: { display: false }, y: { beginAtZero: false } } }
     });
+  });
+
+  // Ажурирај ги цените на екранот ако има вчитано податоци
+  if (latestFirebaseData) {
+    updateUIWithPrices(latestFirebaseData);
+  }
+}
+
+// Ажурирање на цените на екранот и графиците
+function updateUIWithPrices(data) {
+  if (!data) return;
+  Object.keys(data).forEach(key => {
+    const item = data[key];
+    const priceEl = document.getElementById(`price_${key}`);
+    
+    if (priceEl && item.price !== undefined) {
+      priceEl.innerText = `${item.price.toFixed(2)} USDT`;
+    }
+
+    if (charts[item.name] && item.history) {
+      charts[item.name].data.labels = item.history.map((_, i) => `${i + 1}`);
+      charts[item.name].data.datasets[0].data = item.history;
+      charts[item.name].update('none');
+    }
   });
 }
 
-// Вчитување на страницата и синхронизација
+// БЕРЗА ЛОГИКА: Менување на цените на секои 4.5 секунди
+function startStockMarketSimulation() {
+  setInterval(() => {
+    if (!latestFirebaseData) return;
+
+    const updates = {};
+
+    Object.keys(latestFirebaseData).forEach(key => {
+      const item = latestFirebaseData[key];
+      let currentPrice = item.price;
+      const initialPrice = item.initialPrice || currentPrice;
+
+      // Менување на цената за променлив процент помеѓу -1.5% и +1.5%
+      const percentageChange = (Math.random() * 3 - 1.5) / 100;
+      let newPrice = currentPrice * (1 + percentageChange);
+
+      // ГРАНИЦИ:
+      // 1. Да не падне под 1 USDT
+      if (newPrice < 1.0) {
+        newPrice = 1.0;
+      }
+
+      // 2. Да не се покачи над 200% од почетната цена (максимум 3x initialPrice)
+      const maxPrice = initialPrice * 3.0;
+      if (newPrice > maxPrice) {
+        newPrice = maxPrice;
+      }
+
+      newPrice = parseFloat(newPrice.toFixed(2));
+
+      // Чување на историја до последните 10 точки за графикот
+      let newHistory = item.history ? [...item.history] : [currentPrice];
+      newHistory.push(newPrice);
+      if (newHistory.length > 10) {
+        newHistory.shift();
+      }
+
+      updates[`prices/${key}/price`] = newPrice;
+      updates[`prices/${key}/history`] = newHistory;
+      updates[`prices/${key}/initialPrice`] = initialPrice;
+    });
+
+    // Изврши го ажурирањето во Firebase
+    update(ref(db), updates);
+
+  }, 4500); // 4.5 секунди
+}
+
+// Вчитување на страницата
 window.addEventListener("DOMContentLoaded", () => {
   showCategory("football");
 
   const dbRef = ref(db, 'prices');
   onValue(dbRef, (snapshot) => {
     const data = snapshot.val();
+    latestFirebaseData = data;
     
-    // Се генерираат податоците во базата доколку го нема некој тим
     initializeFirebaseData(data);
-
-    // Ажурирај ги цените на екранот
-    if (data) {
-      Object.keys(data).forEach(key => {
-        const item = data[key];
-        const priceEl = document.getElementById(`price_${key}`);
-        if (priceEl && item.price) {
-          priceEl.innerText = `${item.price} USDT`;
-        }
-      });
-    }
+    updateUIWithPrices(data);
   });
+
+  // Започни ја симулацијата за берзата
+  startStockMarketSimulation();
 });
 
 window.showCategory = showCategory;
