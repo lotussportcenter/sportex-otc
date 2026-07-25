@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SportEx OTC Exchange</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -10,73 +11,61 @@
   <header>
     <h1>SportEx OTC Exchange</h1>
     <p>Sports Stock Market</p>
-    <div class="contact-info">
-      <p><strong>OTC International Desk</strong></p>
+  </header>
+
+  <main>
+    <!-- OTC Desk Information Box -->
+    <div class="otc-info-box" style="border: 1px solid #333; padding: 20px; border-radius: 8px; margin-bottom: 20px; background-color: #1a1a1a; color: #fff;">
+      <h2>OTC International Desk</h2>
       <p>📞 +38970302971</p>
       <p>✉️ otcdesk@exoraglobalmk.com</p>
       <p>🕒 Available 24/7</p>
-    </div>
-    <div class="how-it-works">
-      <h2>How Trading Works</h2>
-      <p>
-        Trading on SportEx OTC is conducted directly between counterparties, outside of public order books. 
-        This ensures large trades can be executed smoothly, privately, and with dedicated support.
-      </p>
+      
+      <hr style="border-color: #333; margin: 15px 0;">
+
+      <h3>How Trading Works</h3>
+      <p>Trading on SportEx OTC is conducted directly between counterparties, outside of public order books. This ensures large trades can be executed smoothly, privately, and with dedicated support.</p>
+
       <h3>Key Benefits</h3>
       <ul>
         <li><strong>No Slippage:</strong> Large orders execute at a single, agreed-upon price without moving the public market rate.</li>
         <li><strong>Complete Privacy:</strong> Trades stay off public order books, keeping your strategy hidden from other market participants.</li>
         <li><strong>Personalized Support:</strong> Clients receive dedicated guidance and custom quotes from professional traders.</li>
       </ul>
+
       <h3>How It Works</h3>
       <ol>
         <li><strong>Request a Quote:</strong> You tell the desk what asset and volume you want to trade.</li>
         <li><strong>Price Agreement:</strong> The desk provides a firm, all-in price quote based on current market liquidity.</li>
         <li><strong>Direct Settlement:</strong> Once approved, funds and assets transfer securely between you and the counterparty.</li>
       </ol>
-    </div>
-    <div class="usdt-info">
-      <h2>Important Information</h2>
+
+      <hr style="border-color: #333; margin: 15px 0;">
+
+      <h3>Important Information</h3>
       <p>All prices are expressed in <strong>USDT</strong>. The value of 1 USDT is considered equal to 1 US Dollar.</p>
       <p>OTC Desk commission: <strong>2.5% on purchases</strong> and <strong>1.5% on sales</strong>. This commission is deducted from the value of bought and sold shares.</p>
       <p>The OTC Desk has a <strong>legal obligation</strong> to pay out all sold shares to clients.</p>
-      <p><strong>U.S. Legal Framework:</strong> OTC desks in the United States must register with FinCEN as Money Services Businesses (MSBs), comply with the Bank Secrecy Act (BSA) and Anti‑Money Laundering (AML) rules, and obtain state Money Transmitter Licenses (MTLs). If trading digital asset securities, SEC registration is required. These obligations ensure that OTC desks must honor payouts to clients and maintain strict compliance frameworks.</p>
+      <p style="font-size: 0.85em; color: #aaa;"><strong>U.S. Legal Framework:</strong> OTC desks in the United States must register with FinCEN as Money Services Businesses (MSBs), comply with the Bank Secrecy Act (BSA) and Anti‑Money Laundering (AML) rules, and obtain state Money Transmitter Licenses (MTLs). If trading digital asset securities, SEC registration is required. These obligations ensure that OTC desks must honor payouts to clients and maintain strict compliance frameworks.</p>
     </div>
-  </header>
 
-  <nav>
-    <button onclick="showCategory('football')">Football</button>
-    <button onclick="showCategory('basketball')">Basketball</button>
-    <button onclick="showCategory('tennis')">Tennis</button>
-    <button onclick="showCategory('nfl')">NFL</button>
-    <button onclick="showCategory('others')">Other Stars</button>
-  </nav>
+    <!-- Category Buttons -->
+    <div class="category-buttons" style="display: flex; gap: 10px; justify-content: center; margin: 20px 0; flex-wrap: wrap;">
+      <button onclick="showCategory('football')">Football</button>
+      <button onclick="showCategory('basketball')">NBA</button>
+      <button onclick="showCategory('nfl')">NFL</button>
+      <button onclick="showCategory('nhl')">NHL</button>
+      <button onclick="showCategory('players')">Players</button>
+    </div>
 
-  <main>
-    <section id="market">
-      <h2>Market Board</h2>
-      <div id="stocks"></div>
-    </section>
-
-    <section id="indexes">
-      <h2>Sector Indexes</h2>
-      <canvas id="footballIndex"></canvas>
-      <canvas id="basketballIndex"></canvas>
-      <canvas id="tennisIndex"></canvas>
-      <canvas id="nflIndex"></canvas>
-      <canvas id="othersIndex"></canvas>
-    </section>
-
-    <section id="global">
-      <h2>SportEx 30 Index</h2>
-      <canvas id="globalIndex"></canvas>
-    </section>
+    <h2>Market Board</h2>
+    <div id="stocks"></div>
   </main>
-<footer>
-    <p>© 2026 SportEx OTC Exchange</p>
+
+  <footer style="text-align: center; margin-top: 40px; padding: 20px; color: #777;">
+    <p>&copy; 2026 SportEx OTC Exchange</p>
   </footer>
 
   <script type="module" src="app.js"></script>
 </body>
 </html>
-  
