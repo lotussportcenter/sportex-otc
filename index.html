@@ -3,67 +3,118 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SportEx OTC Exchange</title>
+  <title>SportEx OTC Exchange | Institutional Sports Desk</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Chart.js + Financial Candlestick Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0/dist/chartjs-adapter-luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
 </head>
 <body>
-  <header>
-    <h1>SportEx OTC Exchange</h1>
-    <p>Sports Stock Market</p>
+
+  <!-- Top Navigation Header -->
+  <header class="navbar">
+    <div class="logo-container">
+      <div class="logo-icon">SX</div>
+      <div>
+        <h1>SportEx <span>OTC</span></h1>
+        <p class="subtitle">Institutional Sports Stock Exchange</p>
+      </div>
+    </div>
+    <div class="market-status">
+      <span class="status-dot"></span> MARKET OPEN (24/7)
+    </div>
   </header>
 
-  <main>
-    <!-- OTC Desk Information Box -->
-    <div class="otc-info-box" style="border: 1px solid #333; padding: 20px; border-radius: 8px; margin-bottom: 20px; background-color: #1a1a1a; color: #fff;">
-      <h2>OTC International Desk</h2>
-      <p>📞 +38970302971</p>
-      <p>✉️ otcdesk@exoraglobalmk.com</p>
-      <p>🕒 Available 24/7</p>
-      
-      <hr style="border-color: #333; margin: 15px 0;">
+  <main class="main-container">
+    
+    <!-- Professional OTC Info Desk Panel -->
+    <section class="otc-panel">
+      <div class="panel-header">
+        <h2>Global OTC Institutional Desk</h2>
+        <span class="badge">Direct Liquidity</span>
+      </div>
 
-      <h3>How Trading Works</h3>
-      <p>Trading on SportEx OTC is conducted directly between counterparties, outside of public order books. This ensures large trades can be executed smoothly, privately, and with dedicated support.</p>
+      <div class="contact-strip">
+        <div class="contact-item">
+          <span class="label">Direct Desk Line:</span>
+          <span class="value">📞 +389 70 302 971</span>
+        </div>
+        <div class="contact-item">
+          <span class="label">Institutional Email:</span>
+          <span class="value">✉️ otcdesk@exoraglobalmk.com</span>
+        </div>
+        <div class="contact-item">
+          <span class="label">Settlement Currency:</span>
+          <span class="value">💲 USDT (1 USDT = $1.00 USD)</span>
+        </div>
+      </div>
 
-      <h3>Key Benefits</h3>
-      <ul>
-        <li><strong>No Slippage:</strong> Large orders execute at a single, agreed-upon price without moving the public market rate.</li>
-        <li><strong>Complete Privacy:</strong> Trades stay off public order books, keeping your strategy hidden from other market participants.</li>
-        <li><strong>Personalized Support:</strong> Clients receive dedicated guidance and custom quotes from professional traders.</li>
-      </ul>
+      <hr class="divider">
 
-      <h3>How It Works</h3>
-      <ol>
-        <li><strong>Request a Quote:</strong> You tell the desk what asset and volume you want to trade.</li>
-        <li><strong>Price Agreement:</strong> The desk provides a firm, all-in price quote based on current market liquidity.</li>
-        <li><strong>Direct Settlement:</strong> Once approved, funds and assets transfer securely between you and the counterparty.</li>
-      </ol>
+      <div class="info-grid">
+        <div class="info-card">
+          <h3>Execution & Benefits</h3>
+          <ul>
+            <li><strong>Zero Price Slippage:</strong> Block trades execute at an exact agreed rate without order book impact.</li>
+            <li><strong>Institutional Privacy:</strong> Trades remain off public ledgers to safeguard proprietary trading strategies.</li>
+            <li><strong>Dedicated Coverage:</strong> Tailored liquidity quotes and direct settlement support from specialized traders.</li>
+          </ul>
+        </div>
 
-      <hr style="border-color: #333; margin: 15px 0;">
+        <div class="info-card">
+          <h3>Trading Workflow</h3>
+          <ol>
+            <li><strong>Request Quote:</strong> Submit desired asset and volume to the OTC Desk.</li>
+            <li><strong>Price Lock:</strong> Receive a firm, binding all-in price quote based on live market depth.</li>
+            <li><strong>Instant Settlement:</strong> Secure peer-to-peer asset delivery upon confirmation.</li>
+          </ol>
+        </div>
 
-      <h3>Important Information</h3>
-      <p>All prices are expressed in <strong>USDT</strong>. The value of 1 USDT is considered equal to 1 US Dollar.</p>
-      <p>OTC Desk commission: <strong>2.5% on purchases</strong> and <strong>1.5% on sales</strong>. This commission is deducted from the value of bought and sold shares.</p>
-      <p>The OTC Desk has a <strong>legal obligation</strong> to pay out all sold shares to clients.</p>
-      <p style="font-size: 0.85em; color: #aaa;"><strong>U.S. Legal Framework:</strong> OTC desks in the United States must register with FinCEN as Money Services Businesses (MSBs), comply with the Bank Secrecy Act (BSA) and Anti‑Money Laundering (AML) rules, and obtain state Money Transmitter Licenses (MTLs). If trading digital asset securities, SEC registration is required. These obligations ensure that OTC desks must honor payouts to clients and maintain strict compliance frameworks.</p>
-    </div>
+        <div class="info-card fee-card">
+          <h3>Commission & Guarantees</h3>
+          <div class="fee-row">
+            <span>Buy Orders:</span>
+            <strong>2.5% Commission</strong>
+          </div>
+          <div class="fee-row">
+            <span>Sell Orders:</span>
+            <strong>1.5% Commission</strong>
+          </div>
+          <p class="legal-guarantee">✓ The OTC Desk is legally bound to execute and guarantee client asset payouts.</p>
+        </div>
+      </div>
 
-    <!-- Category Buttons -->
-    <div class="category-buttons" style="display: flex; gap: 10px; justify-content: center; margin: 20px 0; flex-wrap: wrap;">
-      <button onclick="showCategory('football')">Football</button>
-      <button onclick="showCategory('basketball')">NBA</button>
-      <button onclick="showCategory('nfl')">NFL</button>
-      <button onclick="showCategory('nhl')">NHL</button>
-      <button onclick="showCategory('players')">Players</button>
-    </div>
+      <div class="disclaimer-box">
+        <p><strong>Regulatory Notice:</strong> U.S. OTC trading desks operate under FinCEN registration as Money Services Businesses (MSBs), strictly adhering to the Bank Secrecy Act (BSA) and Anti-Money Laundering (AML) standards, as well as applicable State Money Transmitter Licenses (MTLs). Digital asset securities transactions comply with SEC frameworks to ensure complete counterparty protection and payout integrity.</p>
+      </div>
+    </section>
 
-    <h2>Market Board</h2>
-    <div id="stocks"></div>
+    <!-- Market Navigation Categories -->
+    <section class="market-section">
+      <div class="section-title">
+        <h2>Live Market Board</h2>
+        <p>Select asset class to view live candlestick price action</p>
+      </div>
+
+      <div class="category-tabs">
+        <button class="tab-btn active" onclick="showCategory('football', this)">⚽ Football</button>
+        <button class="tab-btn" onclick="showCategory('basketball', this)">🏀 NBA</button>
+        <button class="tab-btn" onclick="showCategory('nfl', this)">🏈 NFL</button>
+        <button class="tab-btn" onclick="showCategory('nhl', this)">🏒 NHL</button>
+        <button class="tab-btn" onclick="showCategory('players', this)">⭐ Players</button>
+      </div>
+
+      <!-- Asset Grid -->
+      <div id="stocks" class="stock-grid"></div>
+    </section>
+
   </main>
 
-  <footer style="text-align: center; margin-top: 40px; padding: 20px; color: #777;">
-    <p>&copy; 2026 SportEx OTC Exchange</p>
+  <footer class="footer">
+    <p>&copy; 2026 SportEx OTC Exchange. All rights reserved. Institutional Grade Sports Assets.</p>
   </footer>
 
   <script type="module" src="app.js"></script>
