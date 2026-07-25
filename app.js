@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// Firebase Конфигурација
 const firebaseConfig = {
   apiKey: "AIzaSyD5XFfRfOO-OsVOYtmZmZtHegKyxDZEW4s",
   authDomain: "sportex-otc.firebaseapp.com",
@@ -13,11 +12,9 @@ const firebaseConfig = {
   measurementId: "G-3H2H9V3ZZF"
 };
 
-// Иницијализација
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Категории и тимови
 const categories = {
   football: [
     "Arsenal", "Manchester City", "Manchester United", "Aston Villa", "Liverpool", "Chelsea", "Newcastle",
@@ -59,14 +56,13 @@ let charts = {};
 let latestFirebaseData = null;
 let currentCategory = "football";
 
-// Запишување на сите тимови во Firebase доколку базата е празна
 function initializeFirebaseData(existingData) {
   const updates = {};
   let hasNewData = false;
 
   Object.keys(categories).forEach(cat => {
     categories[cat].forEach(item => {
-      const itemKey = item.replace(/\s+/g, '_');
+      const itemKey = item.replace(/[^a-zA-Z0-9]/g, '_');
       if (!existingData || !existingData[itemKey]) {
         hasNewData = true;
         const basePrice = parseFloat((Math.random() * (150 - 50) + 50).toFixed(2));
@@ -90,7 +86,6 @@ function initializeFirebaseData(existingData) {
   }
 }
 
-// Прикажување на картичките и графиците
 function showCategory(cat) {
   currentCategory = cat;
   const div = document.getElementById("stocks");
@@ -101,7 +96,7 @@ function showCategory(cat) {
   if (!categories[cat]) return;
 
   categories[cat].forEach(name => {
-    const itemKey = name.replace(/\s+/g, '_');
+    const itemKey = name.replace(/[^a-zA-Z0-9]/g, '_');
     const container = document.createElement("div");
     container.className = "stock";
     container.style.padding = "15px";
@@ -113,14 +108,16 @@ function showCategory(cat) {
     
     container.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>${name}</h3>
+        <h3 style="margin:0;">${name}</h3>
         <span id="price_${itemKey}" style="font-weight:bold; color:#00ff88; font-size:1.1em;">Loading...</span>
       </div>
-      <canvas id="${itemKey}"></canvas>
+      <div style="height: 150px; margin-top: 10px;">
+        <canvas id="canvas_${itemKey}"></canvas>
+      </div>
     `;
     div.appendChild(container);
 
-    const ctx = document.getElementById(itemKey).getContext("2d");
+    const ctx = document.getElementById(`canvas_${itemKey}`).getContext("2d");
     
     const existingHistory = (latestFirebaseData && latestFirebaseData[itemKey] && latestFirebaseData[itemKey].history) 
       ? latestFirebaseData[itemKey].history 
@@ -138,7 +135,12 @@ function showCategory(cat) {
           tension: 0.1 
         }] 
       },
-      options: { animation: false, scales: { x: { display: false }, y: { beginAtZero: false } } }
+      options: { 
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false, 
+        scales: { x: { display: false }, y: { beginAtZero: false } } 
+      }
     });
   });
 
@@ -147,7 +149,6 @@ function showCategory(cat) {
   }
 }
 
-// Ажурирање на вредностите во UI
 function updateUIWithPrices(data) {
   if (!data) return;
   Object.keys(data).forEach(key => {
@@ -166,7 +167,6 @@ function updateUIWithPrices(data) {
   });
 }
 
-// Менување цени на секои 4.5 секунди
 function startStockMarketSimulation() {
   setInterval(() => {
     if (!latestFirebaseData) return;
@@ -201,7 +201,6 @@ function startStockMarketSimulation() {
   }, 4500);
 }
 
-// Поврзување
 window.addEventListener("DOMContentLoaded", () => {
   showCategory("football");
 
