@@ -173,7 +173,8 @@ const categories = {
 
 let charts = {};
 let latestFirebaseData = null;
-const CANDLE_INTERVAL_MS = 30000; // Времетраење на една свеќа (на пр. 30 секунди)
+let currentCategory = "football";
+const CANDLE_INTERVAL_MS = 30000; // Времетраење на една свеќа (30 секунди)
 
 function checkAndAutoFillDatabase(existingData) {
   if (existingData && Object.keys(existingData).length > 0) return;
@@ -321,9 +322,10 @@ function updateUIWithPrices(data) {
   });
 }
 
-// СИНХРОНИЗИРАНА СИМУЛАЦИЈА: СИТЕ ТИМОВИ СЕ МЕНУВААТ ВО ИСТ РИТАМ НА ТОЧНО СЕКОИ 5 СЕКУНДИ
-function startSynchronizedMarketSimulation() {
+// ПРЕЦИЗНА СИНХРОНИЗИРАНА СИМУЛАЦИЈА ТОЧНО НА 5 СЕКУНДИ
+function startStrictMarketSimulation() {
   setInterval(() => {
+    // Работи само ако веќе имаме вчитано податоци од базата
     if (!latestFirebaseData) return;
     const keys = Object.keys(latestFirebaseData);
     if (keys.length === 0) return;
@@ -331,7 +333,6 @@ function startSynchronizedMarketSimulation() {
     const updates = {};
     const now = Date.now();
 
-    // Поминуваме низ сите тимови и сите добиваат промена во истиот момент на секои 5 секунди
     keys.forEach(key => {
       const item = latestFirebaseData[key];
       if (!item) return;
@@ -341,6 +342,7 @@ function startSynchronizedMarketSimulation() {
       let openPrice = currentPrice;
       let closePrice = parseFloat((openPrice + change).toFixed(2));
 
+      // Заштита од пробивање на границите
       if (item.min !== undefined && closePrice < item.min) closePrice = item.min;
       if (item.max !== undefined && closePrice > item.max) closePrice = item.max;
 
@@ -366,7 +368,7 @@ function startSynchronizedMarketSimulation() {
       updates[`${key}/price`] = closePrice;
       updates[`${key}/candles`] = candles;
 
-      // Локално освежување
+      // Веднаш ажурирај ги и локалните податоци
       latestFirebaseData[key].price = closePrice;
       latestFirebaseData[key].prevPrice = openPrice;
       latestFirebaseData[key].candles = candles;
@@ -374,7 +376,7 @@ function startSynchronizedMarketSimulation() {
 
     update(ref(db, 'prices'), updates);
 
-  }, 5000); // Точно на секои 5 секунди (5000 милисекунди) сите тимови се освежуваат синхронизирано
+  }, 5000);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -392,7 +394,8 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  startSynchronizedMarketSimulation();
+  // Ја стартуваме симулацијата веднаш по вчитувањето
+  startStrictMarketSimulation();
 });
 
 window.showCategory = showCategory;
