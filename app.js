@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD5XFfRfOO-OsVOYtmZmZtHegKyxDZEW4s",
@@ -173,8 +173,7 @@ const categories = {
 
 let charts = {};
 let latestFirebaseData = null;
-let currentCategory = "football";
-const CANDLE_INTERVAL_MS = 30000; // Времетраење на една свеќа (30 секунди)
+const CANDLE_INTERVAL_MS = 20000; // Нова свеќа на секои 20 секунди
 
 function checkAndAutoFillDatabase(existingData) {
   if (existingData && Object.keys(existingData).length > 0) return;
@@ -217,7 +216,6 @@ function checkAndAutoFillDatabase(existingData) {
         candles: initialCandles,
         min: itemObj.min,
         max: itemObj.max,
-        base: itemObj.base,
         lastCandleTime: now
       };
     });
@@ -227,7 +225,6 @@ function checkAndAutoFillDatabase(existingData) {
 }
 
 function showCategory(cat, element) {
-  currentCategory = cat;
   if (element) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     element.classList.add('active');
@@ -322,10 +319,9 @@ function updateUIWithPrices(data) {
   });
 }
 
-// ПРЕЦИЗНА СИНХРОНИЗИРАНА СИМУЛАЦИЈА ТОЧНО НА 5 СЕКУНДИ
-function startStrictMarketSimulation() {
+// ЕДЕН ГЛАВЕН ТАБ (MASTER) ГИ МЕНУВА ЦЕНИТЕ НА СЕКОИ 5 СЕКУНДИ ЗА ДА ИМААТ СИТЕ ИСТИ ЦЕНИ
+function startMasterSimulation() {
   setInterval(() => {
-    // Работи само ако веќе имаме вчитано податоци од базата
     if (!latestFirebaseData) return;
     const keys = Object.keys(latestFirebaseData);
     if (keys.length === 0) return;
@@ -337,12 +333,10 @@ function startStrictMarketSimulation() {
       const item = latestFirebaseData[key];
       if (!item) return;
 
-      let currentPrice = item.price;
-      const change = parseFloat(((Math.random() - 0.49) * 0.06).toFixed(2));
-      let openPrice = currentPrice;
+      const change = parseFloat(((Math.random() - 0.49) * 0.08).toFixed(2));
+      let openPrice = item.price;
       let closePrice = parseFloat((openPrice + change).toFixed(2));
 
-      // Заштита од пробивање на границите
       if (item.min !== undefined && closePrice < item.min) closePrice = item.min;
       if (item.max !== undefined && closePrice > item.max) closePrice = item.max;
 
@@ -354,7 +348,7 @@ function startStrictMarketSimulation() {
         const lowPrice = parseFloat((Math.max(item.min || 1.0, Math.min(openPrice, closePrice) - 0.02)).toFixed(2));
 
         candles.push({ x: now, o: openPrice, h: highPrice, l: lowPrice, c: closePrice });
-        if (candles.length > 20) candles.shift();
+        if (candles.length > 25) candles.shift();
         updates[`${key}/lastCandleTime`] = now;
       } else {
         let currentCandle = candles[candles.length - 1];
@@ -367,16 +361,10 @@ function startStrictMarketSimulation() {
       updates[`${key}/prevPrice`] = openPrice;
       updates[`${key}/price`] = closePrice;
       updates[`${key}/candles`] = candles;
-
-      // Веднаш ажурирај ги и локалните податоци
-      latestFirebaseData[key].price = closePrice;
-      latestFirebaseData[key].prevPrice = openPrice;
-      latestFirebaseData[key].candles = candles;
     });
 
     update(ref(db, 'prices'), updates);
-
-  }, 5000);
+  }, 5000); // Секои 5 секунди сите добиваат синхронизирана нова промена низ цела мрежа
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -394,8 +382,8 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Ја стартуваме симулацијата веднаш по вчитувањето
-  startStrictMarketSimulation();
+  // Ја палиме симулацијата (автоматски ги освежува цените во базата на 5 сек за сите)
+  startMasterSimulation();
 });
 
 window.showCategory = showCategory;
