@@ -58,7 +58,7 @@ let currentCategory = "football";
 let isPrimarySimulator = false;
 const clientId = Math.random().toString(36).substring(2, 9);
 
-const CANDLE_INTERVAL_MS = 10000; // Нова свеќичка на 10 секунди
+const CANDLE_INTERVAL_MS = 30000; // Нова свеќичка на секои 30 секунди (многу смирено и прегледно)
 
 function initializeFirebaseData(existingData) {
   const updates = {};
@@ -77,11 +77,10 @@ function initializeFirebaseData(existingData) {
         
         for (let i = 12; i >= 1; i--) {
           const open = prevClose;
-          // Варијација од неколку стотинки (-0.08 до +0.08 USDT)
-          const delta = parseFloat(((Math.random() - 0.49) * 0.16).toFixed(2));
+          const delta = parseFloat(((Math.random() - 0.49) * 0.08).toFixed(2));
           const close = parseFloat(Math.max(1.0, open + delta).toFixed(2));
-          const high = parseFloat((Math.max(open, close) + Math.random() * 0.05).toFixed(2));
-          const low = parseFloat((Math.max(1.0, Math.min(open, close) - Math.random() * 0.05)).toFixed(2));
+          const high = parseFloat((Math.max(open, close) + Math.random() * 0.02).toFixed(2));
+          const low = parseFloat((Math.max(1.0, Math.min(open, close) - Math.random() * 0.02)).toFixed(2));
           
           initialCandles.push({
             x: now - (i * CANDLE_INTERVAL_MS),
@@ -215,20 +214,29 @@ function updateUIWithPrices(data) {
   });
 }
 
-// Реална симулација со реални микро-варијации од стотинки
+// РЕАЛНА РАНДОМ СИМУЛАЦИЈА: Се менуваат само неколку случајни тикери на секои 3 секунди
 function startStockMarketSimulation() {
   setInterval(() => {
     if (!latestFirebaseData || !isPrimarySimulator) return;
 
+    const allKeys = Object.keys(latestFirebaseData);
+    if (allKeys.length === 0) return;
+
     const updates = {};
     const now = Date.now();
 
-    Object.keys(latestFirebaseData).forEach(key => {
-      const item = latestFirebaseData[key];
+    // Избираме само 2-3 случајни позиции за промена (за да нема масовно треперење)
+    const numberOfAssetsToUpdate = Math.floor(Math.random() * 2) + 1; 
+
+    for (let i = 0; i < numberOfAssetsToUpdate; i++) {
+      const randomKey = allKeys[Math.floor(Math.random() * allKeys.length)];
+      const item = latestFirebaseData[randomKey];
+      if (!item) continue;
+
       let currentPrice = item.price;
 
-      // Мали микро-варијации од -$0.05 до +$0.05
-      const change = parseFloat(((Math.random() - 0.49) * 0.10).toFixed(2));
+      // Многу мала промена (од -$0.02 до +$0.02)
+      const change = parseFloat(((Math.random() - 0.49) * 0.04).toFixed(2));
       let openPrice = currentPrice;
       let closePrice = parseFloat((openPrice + change).toFixed(2));
 
@@ -237,10 +245,9 @@ function startStockMarketSimulation() {
       let candles = item.candles ? [...item.candles] : [];
       let lastCandleTime = item.lastCandleTime || now;
 
-      // Ажурирај или создај нова свеќичка
       if (candles.length === 0 || (now - lastCandleTime >= CANDLE_INTERVAL_MS)) {
-        const highPrice = parseFloat((Math.max(openPrice, closePrice) + Math.random() * 0.03).toFixed(2));
-        const lowPrice = parseFloat((Math.max(1.0, Math.min(openPrice, closePrice) - Math.random() * 0.03)).toFixed(2));
+        const highPrice = parseFloat((Math.max(openPrice, closePrice) + Math.random() * 0.01).toFixed(2));
+        const lowPrice = parseFloat((Math.max(1.0, Math.min(openPrice, closePrice) - Math.random() * 0.01)).toFixed(2));
 
         candles.push({
           x: now,
@@ -254,9 +261,8 @@ function startStockMarketSimulation() {
           candles.shift();
         }
 
-        updates[`prices/${key}/lastCandleTime`] = now;
+        updates[`prices/${randomKey}/lastCandleTime`] = now;
       } else {
-        // Ажурирај ја моменталната свеќичка
         let currentCandle = candles[candles.length - 1];
         currentCandle.c = closePrice;
         currentCandle.h = parseFloat(Math.max(currentCandle.h, closePrice).toFixed(2));
@@ -264,14 +270,16 @@ function startStockMarketSimulation() {
         candles[candles.length - 1] = currentCandle;
       }
 
-      updates[`prices/${key}/prevPrice`] = openPrice;
-      updates[`prices/${key}/price`] = closePrice;
-      updates[`prices/${key}/candles`] = candles;
-    });
+      updates[`prices/${randomKey}/prevPrice`] = openPrice;
+      updates[`prices/${randomKey}/price`] = closePrice;
+      updates[`prices/${randomKey}/candles`] = candles;
+    }
 
-    update(ref(db), updates);
+    if (Object.keys(updates).length > 0) {
+      update(ref(db), updates);
+    }
 
-  }, 1500); // Се менува во живо на секои 1.5 секунди
+  }, 3000); // Се извршува на секои 3 секунди
 }
 
 function registerAsSimulator() {
