@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD5XFfRfOO-OsVOYtmZmZtHegKyxDZEW4s",
@@ -55,6 +55,8 @@ const categories = {
 let charts = {};
 let latestFirebaseData = null;
 let currentCategory = "football";
+let isPrimarySimulator = false;
+const clientId = Math.random().toString(36).substring(2, 9);
 
 function initializeFirebaseData(existingData) {
   const updates = {};
@@ -73,10 +75,10 @@ function initializeFirebaseData(existingData) {
         
         for (let i = 12; i >= 1; i--) {
           const open = prevClose;
-          const delta = parseFloat((Math.random() * 0.4 - 0.2).toFixed(2));
-          const close = parseFloat((open + delta).toFixed(2));
-          const high = parseFloat((Math.max(open, close) + Math.random() * 0.1).toFixed(2));
-          const low = parseFloat((Math.min(open, close) - Math.random() * 0.1).toFixed(2));
+          const delta = parseFloat(((Math.random() - 0.48) * 0.8).toFixed(2));
+          const close = parseFloat(Math.max(1.0, open + delta).toFixed(2));
+          const high = parseFloat((Math.max(open, close) + Math.random() * 0.15).toFixed(2));
+          const low = parseFloat((Math.max(1.0, Math.min(open, close) - Math.random() * 0.15)).toFixed(2));
           
           initialCandles.push({
             x: now - (i * 2000),
@@ -93,13 +95,14 @@ function initializeFirebaseData(existingData) {
           category: cat,
           initialPrice: basePrice,
           price: prevClose,
+          prevPrice: prevClose,
           candles: initialCandles
         };
       }
     });
   });
 
-  if (needsUpdate) {
+  if (needsUpdate && isPrimarySimulator) {
     update(ref(db), updates);
   }
 }
@@ -191,6 +194,14 @@ function updateUIWithPrices(data) {
     
     if (priceEl && item.price !== undefined) {
       priceEl.innerText = `${item.price.toFixed(2)} USDT`;
+
+      if (item.prevPrice !== undefined) {
+        if (item.price < item.prevPrice) {
+          priceEl.classList.add('down');
+        } else {
+          priceEl.classList.remove('down');
+        }
+      }
     }
 
     if (charts[item.name] && item.candles) {
@@ -200,10 +211,10 @@ function updateUIWithPrices(data) {
   });
 }
 
-// СИМУЛАЦИЈА - Менување цени на секои 2 секунди
+// Секој тим си има сопствена независна логика на промена
 function startStockMarketSimulation() {
   setInterval(() => {
-    if (!latestFirebaseData) return;
+    if (!latestFirebaseData || !isPrimarySimulator) return;
 
     const updates = {};
     const now = Date.now();
@@ -211,18 +222,20 @@ function startStockMarketSimulation() {
     Object.keys(latestFirebaseData).forEach(key => {
       const item = latestFirebaseData[key];
       let currentPrice = item.price;
-      const initialPrice = item.initialPrice || currentPrice;
 
-      // Микро-промена за динамичност (-0.15% до +0.15%)
-      const percentageChange = (Math.random() * 0.3 - 0.15) / 100;
+      // Независна промена за секоја цена посебно (-0.4% до +0.4%)
+      const randomFactor = (Math.random() - 0.49) * 0.008;
       let openPrice = currentPrice;
-      let closePrice = openPrice * (1 + percentageChange);
+      let closePrice = openPrice * (1 + randomFactor);
 
       if (closePrice < 1.0) closePrice = 1.0;
       closePrice = parseFloat(closePrice.toFixed(2));
 
-      const highPrice = parseFloat((Math.max(openPrice, closePrice) + Math.random() * 0.08).toFixed(2));
-      const lowPrice = parseFloat((Math.min(openPrice, closePrice) - Math.random() * 0.08).toFixed(2));
+      // Различни high/low за секоја свеќица
+      const highDelta = Math.random() * 0.12;
+      const lowDelta = Math.random() * 0.12;
+      const highPrice = parseFloat((Math.max(openPrice, closePrice) + highDelta).toFixed(2));
+      const lowPrice = parseFloat((Math.max(1.0, Math.min(openPrice, closePrice) - lowDelta)).toFixed(2));
 
       let candles = item.candles ? [...item.candles] : [];
       
@@ -234,23 +247,39 @@ function startStockMarketSimulation() {
         c: closePrice
       });
 
-      // Чувај 15 свеќици
       if (candles.length > 15) {
         candles.shift();
       }
 
+      updates[`prices/${key}/prevPrice`] = openPrice;
       updates[`prices/${key}/price`] = closePrice;
       updates[`prices/${key}/candles`] = candles;
-      updates[`prices/${key}/initialPrice`] = initialPrice;
     });
 
     update(ref(db), updates);
 
-  }, 2000); // Точно на секои 2 секунди!
+  }, 2000);
+}
+
+// Firebase Master Lock систем (Обезбедува 1 централен симулатор)
+function registerAsSimulator() {
+  const leaderRef = ref(db, 'active_simulator');
+
+  onValue(leaderRef, (snapshot) => {
+    const currentLeader = snapshot.val();
+    if (!currentLeader || currentLeader === clientId) {
+      isPrimarySimulator = true;
+      set(leaderRef, clientId);
+      onDisconnect(leaderRef).remove();
+    } else {
+      isPrimarySimulator = false;
+    }
+  });
 }
 
 window.addEventListener("DOMContentLoaded", () => {
   showCategory("football");
+  registerAsSimulator();
 
   const dbRef = ref(db, 'prices');
   onValue(dbRef, (snapshot) => {
