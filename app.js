@@ -173,7 +173,7 @@ const categories = {
 
 let charts = {};
 let latestFirebaseData = null;
-const CANDLE_INTERVAL_MS = 20000; // Нова свеќа на секои 20 секунди
+const CANDLE_INTERVAL_MS = 60000; // Една свеќа трае точно 1 минута без дупки
 
 function checkAndAutoFillDatabase(existingData) {
   if (existingData && Object.keys(existingData).length > 0) return;
@@ -187,7 +187,7 @@ function checkAndAutoFillDatabase(existingData) {
       let initialCandles = [];
       let prevClose = itemObj.base;
       
-      for (let i = 10; i >= 1; i--) {
+      for (let i = 15; i >= 1; i--) {
         const open = prevClose;
         const delta = parseFloat(((Math.random() - 0.48) * 0.4).toFixed(2));
         let close = parseFloat((open + delta).toFixed(2));
@@ -271,13 +271,13 @@ function showCategory(cat, element) {
       options: { 
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 300 }, // Вклучена мазна анимација на секое освежување
+        animation: { duration: 300 },
         plugins: { legend: { display: false } },
         scales: { 
           x: { 
             type: 'time',
-            time: { unit: 'second' },
-            ticks: { color: '#848e9c', maxTicksLimit: 4 },
+            time: { unit: 'minute' },
+            ticks: { color: '#848e9c', maxTicksLimit: 5 },
             grid: { color: '#1e2329' }
           }, 
           y: { 
@@ -314,7 +314,7 @@ function updateUIWithPrices(data) {
 
     if (charts[item.name] && item.candles) {
       charts[item.name].data.datasets[0].data = item.candles;
-      charts[item.name].update(); // Ажурирање со мазна анимација за видливо мрдање
+      charts[item.name].update();
     }
   });
 }
@@ -332,8 +332,7 @@ function startMasterSimulation() {
       const item = latestFirebaseData[key];
       if (!item) return;
 
-      // Поголеми и видливи промени на цената на секои 5 секунди
-      const change = parseFloat(((Math.random() - 0.48) * 0.5).toFixed(2));
+      const change = parseFloat(((Math.random() - 0.48) * 0.4).toFixed(2));
       let openPrice = item.price;
       let closePrice = parseFloat((openPrice + change).toFixed(2));
 
@@ -343,6 +342,7 @@ function startMasterSimulation() {
       let candles = item.candles ? [...item.candles] : [];
       let lastCandleTime = item.lastCandleTime || now;
 
+      // Контрола за свеќите: нова свеќа само на секоја минута, без дупки
       if (candles.length === 0 || (now - lastCandleTime >= CANDLE_INTERVAL_MS)) {
         const highPrice = parseFloat((Math.max(openPrice, closePrice) + 0.15).toFixed(2));
         const lowPrice = parseFloat((Math.max(item.min || 1.0, Math.min(openPrice, closePrice) - 0.15)).toFixed(2));
@@ -364,7 +364,7 @@ function startMasterSimulation() {
     });
 
     update(ref(db, 'prices'), updates);
-  }, 5000); // Точно на секои 5 секунди сите свеќи и цени мрдаат живо
+  }, 5000); // Освежување на цените и тековната свеќа на секои 5 секунди
 }
 
 window.addEventListener("DOMContentLoaded", () => {
