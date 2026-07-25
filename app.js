@@ -332,12 +332,10 @@ function updateUIWithPrices(data) {
   });
 }
 
-// Заедничка синхронизирана симулација која ги запишува промените во Firebase
 function startSharedMarketSimulation() {
   setInterval(() => {
     if (!latestFirebaseData) return;
 
-    // Избираме еден случаен тикер за промена на секои 12 секунди за да биде стабилно
     const allKeys = Object.keys(latestFirebaseData);
     if (allKeys.length === 0) return;
 
