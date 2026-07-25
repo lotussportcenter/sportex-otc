@@ -15,7 +15,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Целосен JSON сет со сите категории, тимови, играчи и почетни свеќички
 const categories = {
   football: [
     { name: "Real Madrid", base: 185.50, min: 140, max: 280 },
@@ -175,12 +174,11 @@ const categories = {
 let charts = {};
 let latestFirebaseData = null;
 let currentCategory = "football";
-const CANDLE_INTERVAL_MS = 60000;
+const CANDLE_INTERVAL_MS = 30000;
 
 function checkAndAutoFillDatabase(existingData) {
-  if (existingData && Object.keys(existingData).length > 0) return; // Веќе има податоци
+  if (existingData && Object.keys(existingData).length > 0) return;
 
-  console.log("Базата е празна. Автоматски креирам JSON пакет со сите тимови и свеќички...");
   const updates = {};
   const now = Date.now();
 
@@ -281,7 +279,7 @@ function showCategory(cat, element) {
         scales: { 
           x: { 
             type: 'time',
-            time: { unit: 'minute' },
+            time: { unit: 'second' },
             ticks: { color: '#848e9c', maxTicksLimit: 4 },
             grid: { color: '#1e2329' }
           }, 
@@ -324,50 +322,65 @@ function updateUIWithPrices(data) {
   });
 }
 
-function startSharedMarketSimulation() {
+// НАИЗМЕНИЧНА СИМУЛАЦИЈА (СЕКОЈ ТИМ СИ МЕНУВА ЦЕНА ВО СВОЈ СЛУЧАЈЕН ТЕМПО РОК ДО 5 СЕКУНДИ)
+function startStaggeredMarketSimulation() {
   setInterval(() => {
     if (!latestFirebaseData) return;
-    const allKeys = Object.keys(latestFirebaseData);
-    if (allKeys.length === 0) return;
+    const keys = Object.keys(latestFirebaseData);
+    if (keys.length === 0) return;
 
-    const randomKey = allKeys[Math.floor(Math.random() * allKeys.length)];
-    const item = latestFirebaseData[randomKey];
-    if (!item) return;
-
+    // Избираме неколку случајни тимови кои ќе сменат цена во овој момент (на пр. 30% до 50% од нив одеднаш, но постојано се сменати во текот на секундите)
+    const updates = {};
     const now = Date.now();
-    let currentPrice = item.price;
-    const change = parseFloat(((Math.random() - 0.49) * 0.04).toFixed(2));
-    let openPrice = currentPrice;
-    let closePrice = parseFloat((openPrice + change).toFixed(2));
 
-    if (item.min && closePrice < item.min) closePrice = item.min;
-    if (item.max && closePrice > item.max) closePrice = item.max;
+    keys.forEach(key => {
+      // 40% шанса секој тим да ја смени цената во ова отчукување, што создава целосно наизменичен и реален ефект
+      if (Math.random() < 0.4) {
+        const item = latestFirebaseData[key];
+        if (!item) return;
 
-    let candles = item.candles ? [...item.candles] : [];
-    let lastCandleTime = item.lastCandleTime || now;
+        let currentPrice = item.price;
+        const change = parseFloat(((Math.random() - 0.49) * 0.06).toFixed(2));
+        let openPrice = currentPrice;
+        let closePrice = parseFloat((openPrice + change).toFixed(2));
 
-    if (candles.length === 0 || (now - lastCandleTime >= CANDLE_INTERVAL_MS)) {
-      const highPrice = parseFloat((Math.max(openPrice, closePrice) + 0.02).toFixed(2));
-      const lowPrice = parseFloat((Math.max(item.min || 1.0, Math.min(openPrice, closePrice) - 0.02)).toFixed(2));
+        if (item.min !== undefined && closePrice < item.min) closePrice = item.min;
+        if (item.max !== undefined && closePrice > item.max) closePrice = item.max;
 
-      candles.push({ x: now, o: openPrice, h: highPrice, l: lowPrice, c: closePrice });
-      if (candles.length > 15) candles.shift();
-      update(ref(db), { [`prices/${randomKey}/lastCandleTime`]: now });
-    } else {
-      let currentCandle = candles[candles.length - 1];
-      currentCandle.c = closePrice;
-      currentCandle.h = parseFloat(Math.max(currentCandle.h, closePrice).toFixed(2));
-      currentCandle.l = parseFloat(Math.min(currentCandle.l, closePrice).toFixed(2));
-      candles[candles.length - 1] = currentCandle;
+        let candles = item.candles ? [...item.candles] : [];
+        let lastCandleTime = item.lastCandleTime || now;
+
+        if (candles.length === 0 || (now - lastCandleTime >= CANDLE_INTERVAL_MS)) {
+          const highPrice = parseFloat((Math.max(openPrice, closePrice) + 0.02).toFixed(2));
+          const lowPrice = parseFloat((Math.max(item.min || 1.0, Math.min(openPrice, closePrice) - 0.02)).toFixed(2));
+
+          candles.push({ x: now, o: openPrice, h: highPrice, l: lowPrice, c: closePrice });
+          if (candles.length > 20) candles.shift();
+          updates[`${key}/lastCandleTime`] = now;
+        } else {
+          let currentCandle = candles[candles.length - 1];
+          currentCandle.c = closePrice;
+          currentCandle.h = parseFloat(Math.max(currentCandle.h, closePrice).toFixed(2));
+          currentCandle.l = parseFloat(Math.min(currentCandle.l, closePrice).toFixed(2));
+          candles[candles.length - 1] = currentCandle;
+        }
+
+        updates[`${key}/prevPrice`] = openPrice;
+        updates[`${key}/price`] = closePrice;
+        updates[`${key}/candles`] = candles;
+
+        // Локално го ажурираме за да нема лажење во следниот циклус
+        latestFirebaseData[key].price = closePrice;
+        latestFirebaseData[key].prevPrice = openPrice;
+        latestFirebaseData[key].candles = candles;
+      }
+    });
+
+    if (Object.keys(updates).length > 0) {
+      update(ref(db, 'prices'), updates);
     }
 
-    const updates = {};
-    updates[`prices/${randomKey}/prevPrice`] = openPrice;
-    updates[`prices/${randomKey}/price`] = closePrice;
-    updates[`prices/${randomKey}/candles`] = candles;
-
-    update(ref(db), updates);
-  }, 12000);
+  }, 1500); // Проверка на секои 1.5 секунди за да се менуваат наизменично и постојано
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -385,7 +398,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  startSharedMarketSimulation();
+  startStaggeredMarketSimulation();
 });
 
 window.showCategory = showCategory;
