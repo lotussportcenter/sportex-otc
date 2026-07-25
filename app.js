@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD5XFfRfOO-OsVOYtmZmZtHegKyxDZEW4s",
@@ -15,100 +15,232 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// РЕАЛНИ БЕРЗАНСКИ ЦЕНИ И ОПСЕЗИ (RANGE)
 const categories = {
   football: [
-    "Arsenal", "Manchester City", "Manchester United", "Aston Villa", "Liverpool", "Chelsea", "Newcastle",
-    "Inter", "Napoli", "Roma", "Como", "Juventus", "Fiorentina", "Milan", "Atalanta", "Lazio",
-    "Bayern Munich", "Borussia Dortmund", "RB Leipzig", "VfB Stuttgart", "Hoffenheim", "Bayern Leverkusen",
-    "Paris Saint-Germain", "RC Lens", "Lille OSC", "Olympique Lyon", "Olympique Marseille",
-    "Real Madrid", "Barcelona", "Atlético Madrid", "Athletic Bilbao", "Real Sociedad", "Villarreal", "Sevilla", "Valencia", "Betis"
+    { name: "Real Madrid", base: 185.50, min: 140, max: 280 },
+    { name: "Manchester City", base: 178.20, min: 130, max: 260 },
+    { name: "Arsenal", base: 142.00, min: 100, max: 210 },
+    { name: "Barcelona", base: 165.80, min: 120, max: 240 },
+    { name: "Bayern Munich", base: 155.00, min: 110, max: 230 },
+    { name: "Liverpool", base: 150.30, min: 105, max: 220 },
+    { name: "Paris Saint-Germain", base: 145.00, min: 95, max: 210 },
+    { name: "Inter", base: 112.40, min: 80, max: 170 },
+    { name: "Juventus", base: 98.60, min: 65, max: 150 },
+    { name: "Milan", base: 92.10, min: 60, max: 145 },
+    { name: "Atalanta", base: 64.50, min: 40, max: 110 },
+    { name: "Como", base: 32.80, min: 18, max: 65 },
+    { name: "Manchester United", base: 125.00, min: 85, max: 190 },
+    { name: "Aston Villa", base: 78.40, min: 50, max: 125 },
+    { name: "Chelsea", base: 115.00, min: 75, max: 180 },
+    { name: "Newcastle", base: 82.30, min: 52, max: 130 },
+    { name: "Napoli", base: 88.00, min: 55, max: 135 },
+    { name: "Roma", base: 72.00, min: 45, max: 115 },
+    { name: "Fiorentina", base: 48.00, min: 28, max: 85 },
+    { name: "Lazio", base: 56.00, min: 35, max: 95 },
+    { name: "Borussia Dortmund", base: 94.00, min: 60, max: 145 },
+    { name: "RB Leipzig", base: 71.00, min: 45, max: 115 },
+    { name: "VfB Stuttgart", base: 52.00, min: 30, max: 90 },
+    { name: "Hoffenheim", base: 34.00, min: 20, max: 65 },
+    { name: "Bayern Leverkusen", base: 108.00, min: 70, max: 165 },
+    { name: "RC Lens", base: 38.00, min: 22, max: 70 },
+    { name: "Lille OSC", base: 44.00, min: 25, max: 75 },
+    { name: "Olympique Lyon", base: 58.00, min: 35, max: 95 },
+    { name: "Olympique Marseille", base: 62.00, min: 38, max: 100 },
+    { name: "Atlético Madrid", base: 102.00, min: 65, max: 155 },
+    { name: "Athletic Bilbao", base: 54.00, min: 32, max: 88 },
+    { name: "Real Sociedad", base: 58.00, min: 35, max: 92 },
+    { name: "Villarreal", base: 46.00, min: 26, max: 80 },
+    { name: "Sevilla", base: 50.00, min: 30, max: 85 },
+    { name: "Valencia", base: 42.00, min: 24, max: 72 },
+    { name: "Betis", base: 45.00, min: 26, max: 76 }
   ],
   basketball: [
-    "Oklahoma City Thunder", "San Antonio Spurs", "Denver Nuggets", "Los Angeles Lakers", "Houston Rockets", "Detroit Pistons",
-    "Boston Celtics", "New York Knicks", "Cleveland Cavaliers", "Toronto Raptors", "Golden State Warriors", "Miami Heat",
-    "Philadelphia 76ers", "Milwaukee Bucks", "Chicago Bulls", "Dallas Mavericks", "Phoenix Suns", "Memphis Grizzlies",
-    "Sacramento Kings", "Minnesota Timberwolves", "Atlanta Hawks", "Brooklyn Nets", "Charlotte Hornets", "Indiana Pacers",
-    "Orlando Magic", "Utah Jazz", "Portland Trail Blazers", "New Orleans Pelicans", "Washington Wizards"
+    { name: "Boston Celtics", base: 175.00, min: 120, max: 260 },
+    { name: "Denver Nuggets", base: 162.00, min: 110, max: 240 },
+    { name: "Oklahoma City Thunder", base: 148.00, min: 95, max: 220 },
+    { name: "Los Angeles Lakers", base: 158.00, min: 105, max: 235 },
+    { name: "Golden State Warriors", base: 152.00, min: 100, max: 225 },
+    { name: "Dallas Mavericks", base: 138.00, min: 88, max: 200 },
+    { name: "Milwaukee Bucks", base: 142.00, min: 90, max: 210 },
+    { name: "Minnesota Timberwolves", base: 124.00, min: 78, max: 185 },
+    { name: "New York Knicks", base: 130.00, min: 82, max: 190 },
+    { name: "San Antonio Spurs", base: 95.00, min: 55, max: 160 },
+    { name: "Miami Heat", base: 108.00, min: 68, max: 165 },
+    { name: "Cleveland Cavaliers", base: 115.00, min: 72, max: 175 },
+    { name: "Philadelphia 76ers", base: 122.00, min: 75, max: 180 },
+    { name: "Phoenix Suns", base: 128.00, min: 80, max: 190 },
+    { name: "Sacramento Kings", base: 85.00, min: 50, max: 135 },
+    { name: "Indiana Pacers", base: 88.00, min: 52, max: 140 },
+    { name: "Orlando Magic", base: 82.00, min: 48, max: 130 },
+    { name: "Houston Rockets", base: 74.00, min: 42, max: 120 },
+    { name: "Chicago Bulls", base: 78.00, min: 45, max: 125 },
+    { name: "Atlanta Hawks", base: 68.00, min: 38, max: 110 },
+    { name: "Brooklyn Nets", base: 62.00, min: 35, max: 100 },
+    { name: "Toronto Raptors", base: 65.00, min: 36, max: 105 },
+    { name: "Memphis Grizzlies", base: 86.00, min: 50, max: 135 },
+    { name: "New Orleans Pelicans", base: 80.00, min: 46, max: 128 },
+    { name: "Utah Jazz", base: 58.00, min: 32, max: 95 },
+    { name: "Portland Trail Blazers", base: 52.00, min: 28, max: 88 },
+    { name: "Detroit Pistons", base: 42.00, min: 22, max: 72 },
+    { name: "Washington Wizards", base: 38.00, min: 20, max: 65 },
+    { name: "Charlotte Hornets", base: 45.00, min: 25, max: 75 }
   ],
   nfl: [
-    "Seattle Seahawks", "New England Patriots", "Denver Broncos", "Jacksonville Jaguars", "LA Rams", "Houston Texans",
-    "Buffalo Bills", "Philadelphia Eagles", "Pittsburgh Steelers", "San Francisco 49ers", "Chicago Bears", "Green Bay Packers",
-    "Minnesota Vikings", "Detroit Lions", "Dallas Cowboys", "Baltimore Ravens", "LA Chargers", "Kansas City Chiefs",
-    "Miami Dolphins", "Cleveland Browns", "Cincinnati Bengals", "Washington Commanders", "New York Giants", "Tampa Bay Buccaneers",
-    "Carolina Panthers", "Atlanta Falcons", "New Orleans Saints", "Indianapolis Colts", "Arizona Cardinals", "Las Vegas Raiders"
+    { name: "Kansas City Chiefs", base: 195.00, min: 140, max: 290 },
+    { name: "San Francisco 49ers", base: 172.00, min: 120, max: 250 },
+    { name: "Philadelphia Eagles", base: 160.00, min: 110, max: 235 },
+    { name: "Baltimore Ravens", base: 155.00, min: 105, max: 225 },
+    { name: "Detroit Lions", base: 142.00, min: 92, max: 210 },
+    { name: "Buffalo Bills", base: 148.00, min: 95, max: 215 },
+    { name: "Dallas Cowboys", base: 150.00, min: 98, max: 220 },
+    { name: "Green Bay Packers", base: 128.00, min: 80, max: 185 },
+    { name: "Houston Texans", base: 118.00, min: 72, max: 175 },
+    { name: "Miami Dolphins", base: 122.00, min: 75, max: 180 },
+    { name: "Cincinnati Bengals", base: 125.00, min: 78, max: 185 },
+    { name: "LA Rams", base: 112.00, min: 68, max: 165 },
+    { name: "Pittsburgh Steelers", base: 105.00, min: 62, max: 155 },
+    { name: "Cleveland Browns", base: 88.00, min: 52, max: 135 },
+    { name: "Tampa Bay Buccaneers", base: 85.00, min: 50, max: 130 },
+    { name: "Jacksonville Jaguars", base: 78.00, min: 45, max: 122 },
+    { name: "Seattle Seahawks", base: 82.00, min: 48, max: 128 },
+    { name: "Minnesota Vikings", base: 80.00, min: 46, max: 125 },
+    { name: "Indianapolis Colts", base: 74.00, min: 42, max: 118 },
+    { name: "Chicago Bears", base: 76.00, min: 44, max: 120 },
+    { name: "Denver Broncos", base: 68.00, min: 38, max: 110 },
+    { name: "LA Chargers", base: 86.00, min: 50, max: 132 },
+    { name: "New York Giants", base: 62.00, min: 35, max: 100 },
+    { name: "Washington Commanders", base: 65.00, min: 36, max: 105 },
+    { name: "New Orleans Saints", base: 64.00, min: 35, max: 102 },
+    { name: "Atlanta Falcons", base: 70.00, min: 40, max: 112 },
+    { name: "Las Vegas Raiders", base: 66.00, min: 36, max: 106 },
+    { name: "Arizona Cardinals", base: 54.00, min: 30, max: 88 },
+    { name: "Tennessee Titans", base: 52.00, min: 28, max: 85 },
+    { name: "New England Patriots", base: 58.00, min: 32, max: 92 },
+    { name: "Carolina Panthers", base: 42.00, min: 22, max: 70 }
   ],
   nhl: [
-    "Carolina Hurricanes", "Colorado Avalanche", "Vegas Golden Knights", "Buffalo Sabres", "Tampa Bay Lightning",
-    "Montreal Canadiens", "Dallas Stars", "Minnesota Wild", "Pittsburgh Penguins", "Philadelphia Flyers", "Boston Bruins",
-    "Ottawa Senators", "New York Rangers", "Toronto Maple Leafs", "Washington Capitals", "Florida Panthers",
-    "New Jersey Devils", "Columbus Blue Jackets", "Detroit Red Wings", "Nashville Predators", "St. Louis Blues",
-    "Winnipeg Jets", "Calgary Flames", "Edmonton Oilers", "Vancouver Canucks", "Anaheim Ducks", "Los Angeles Kings",
-    "San Jose Sharks", "Chicago Blackhawks", "Utah Mammoth"
+    { name: "Florida Panthers", base: 168.00, min: 115, max: 245 },
+    { name: "Edmonton Oilers", base: 162.00, min: 110, max: 238 },
+    { name: "Colorado Avalanche", base: 155.00, min: 105, max: 225 },
+    { name: "Rangers New York", base: 148.00, min: 95, max: 215 },
+    { name: "Dallas Stars", base: 142.00, min: 90, max: 208 },
+    { name: "Vegas Golden Knights", base: 138.00, min: 88, max: 200 },
+    { name: "Carolina Hurricanes", base: 135.00, min: 85, max: 195 },
+    { name: "Tampa Bay Lightning", base: 132.00, min: 82, max: 192 },
+    { name: "Boston Bruins", base: 128.00, min: 78, max: 185 },
+    { name: "Toronto Maple Leafs", base: 130.00, min: 80, max: 188 },
+    { name: "Vancouver Canucks", base: 120.00, min: 72, max: 175 },
+    { name: "Winnipeg Jets", base: 112.00, min: 68, max: 165 },
+    { name: "Nashville Predators", base: 95.00, min: 58, max: 145 },
+    { name: "Los Angeles Kings", base: 92.00, min: 55, max: 140 },
+    { name: "New Jersey Devils", base: 98.00, min: 60, max: 148 },
+    { name: "Philadelphia Flyers", base: 74.00, min: 42, max: 118 },
+    { name: "Washington Capitals", base: 82.00, min: 48, max: 128 },
+    { name: "Pittsburgh Penguins", base: 80.00, min: 46, max: 125 },
+    { name: "Detroit Red Wings", base: 76.00, min: 44, max: 120 },
+    { name: "St. Louis Blues", base: 72.00, min: 40, max: 115 },
+    { name: "Minnesota Wild", base: 78.00, min: 45, max: 122 },
+    { name: "Ottawa Senators", base: 64.00, min: 36, max: 102 },
+    { name: "Buffalo Sabres", base: 62.00, min: 34, max: 100 },
+    { name: "Montreal Canadiens", base: 68.00, min: 38, max: 108 },
+    { name: "Calgary Flames", base: 66.00, min: 36, max: 105 },
+    { name: "Seattle Kraken", base: 70.00, min: 40, max: 110 },
+    { name: "Utah Mammoth", base: 58.00, min: 32, max: 92 },
+    { name: "Anaheim Ducks", base: 48.00, min: 26, max: 80 },
+    { name: "Chicago Blackhawks", base: 52.00, min: 28, max: 85 },
+    { name: "San Jose Sharks", base: 38.00, min: 20, max: 65 },
+    { name: "Columbus Blue Jackets", base: 44.00, min: 24, max: 72 }
   ],
   players: [
-    "Shai Gilgeous-Alexander", "Nikola Jokic", "Victor Wembanyama", "Luka Doncic", "Giannis Antetokounmpo",
-    "Cristiano Ronaldo", "Lionel Messi", "Kylian Mbappe", "Erling Haaland", "Lamine Yamal",
-    "Vinicius Junior", "Jude Bellingham", "Joao Felix", "Pedri", "Ferran Torres", "Marcus Rashford"
+    { name: "Kylian Mbappe", base: 215.00, min: 150, max: 320 },
+    { name: "Erling Haaland", base: 208.00, min: 145, max: 310 },
+    { name: "Jude Bellingham", base: 192.00, min: 130, max: 285 },
+    { name: "Vinicius Junior", base: 188.00, min: 125, max: 280 },
+    { name: "Lamine Yamal", base: 175.00, min: 110, max: 260 },
+    { name: "Nikola Jokic", base: 198.00, min: 135, max: 295 },
+    { name: "Luka Doncic", base: 195.00, min: 130, max: 290 },
+    { name: "Giannis Antetokounmpo", base: 182.00, min: 120, max: 270 },
+    { name: "Shai Gilgeous-Alexander", base: 178.00, min: 115, max: 265 },
+    { name: "Victor Wembanyama", base: 185.00, min: 120, max: 280 },
+    { name: "Lionel Messi", base: 165.00, min: 105, max: 240 },
+    { name: "Cristiano Ronaldo", base: 158.00, min: 100, max: 230 },
+    { name: "Pedri", base: 112.00, min: 72, max: 170 },
+    { name: "Marcus Rashford", base: 88.00, min: 52, max: 138 },
+    { name: "Joao Felix", base: 74.00, min: 42, max: 120 },
+    { name: "Ferran Torres", base: 62.00, min: 35, max: 98 }
   ]
 };
 
 let charts = {};
 let latestFirebaseData = null;
 let currentCategory = "football";
-let isPrimarySimulator = false;
-const clientId = Math.random().toString(36).substring(2, 9);
+let state = {};
 
-const CANDLE_INTERVAL_MS = 60000; // Нова свеќичка на секоја 1 минута (многу стабилно)
+const CANDLE_INTERVAL_MS = 60000; // Нова свеќичка на секоја минута
 
-function initializeFirebaseData(existingData) {
-  const updates = {};
-  let needsUpdate = false;
+// Локална симулација што генерално го прати секој клиент за мазна анимација
+function getDeterministicPrice(itemObj, now) {
+  const seed = now / 12000;
+  const hash = Math.sin(seed * 9999 + itemObj.base) * 10000;
+  const delta = ((hash - Math.floor(hash)) - 0.49) * 0.04;
+  
+  if (!state[itemObj.name]) {
+    state[itemObj.name] = itemObj.base;
+  }
+
+  let nextPrice = parseFloat((state[itemObj.name] + delta).toFixed(2));
+  
+  // Внимавај на границите (Range limits)
+  if (nextPrice < itemObj.min) nextPrice = itemObj.min;
+  if (nextPrice > itemObj.max) nextPrice = itemObj.max;
+
+  state[itemObj.name] = nextPrice;
+  return nextPrice;
+}
+
+function generateLocalDataset(cat) {
   const now = Date.now();
+  const result = {};
 
-  Object.keys(categories).forEach(cat => {
-    categories[cat].forEach(item => {
-      const itemKey = item.replace(/[^a-zA-Z0-9]/g, '_');
-      if (!existingData || !existingData[itemKey] || !existingData[itemKey].candles) {
-        needsUpdate = true;
-        const basePrice = parseFloat((Math.random() * (120 - 40) + 40).toFixed(2));
-        
-        let initialCandles = [];
-        let prevClose = basePrice;
-        
-        for (let i = 10; i >= 1; i--) {
-          const open = prevClose;
-          // Варијација од само $0.01 до $0.03
-          const delta = parseFloat(((Math.random() - 0.49) * 0.04).toFixed(2));
-          const close = parseFloat(Math.max(1.0, open + delta).toFixed(2));
-          const high = parseFloat((Math.max(open, close) + 0.01).toFixed(2));
-          const low = parseFloat((Math.max(1.0, Math.min(open, close) - 0.01)).toFixed(2));
-          
-          initialCandles.push({
-            x: now - (i * CANDLE_INTERVAL_MS),
-            o: open,
-            h: high,
-            l: low,
-            c: close
-          });
-          prevClose = close;
-        }
+  categories[cat].forEach(itemObj => {
+    const itemKey = itemObj.name.replace(/[^a-zA-Z0-9]/g, '_');
+    let prevClose = itemObj.base;
+    let candles = [];
 
-        updates['prices/' + itemKey] = {
-          name: item,
-          category: cat,
-          initialPrice: basePrice,
-          price: prevClose,
-          prevPrice: prevClose,
-          candles: initialCandles,
-          lastCandleTime: now
-        };
-      }
-    });
+    for (let i = 10; i >= 1; i--) {
+      const open = prevClose;
+      const delta = parseFloat(((Math.random() - 0.49) * 0.05).toFixed(2));
+      let close = parseFloat((open + delta).toFixed(2));
+      
+      if (close < itemObj.min) close = itemObj.min;
+      if (close > itemObj.max) close = itemObj.max;
+
+      const high = parseFloat((Math.max(open, close) + 0.02).toFixed(2));
+      const low = parseFloat((Math.max(itemObj.min, Math.min(open, close) - 0.02)).toFixed(2));
+
+      candles.push({
+        x: now - (i * CANDLE_INTERVAL_MS),
+        o: open,
+        h: high,
+        l: low,
+        c: close
+      });
+      prevClose = close;
+    }
+
+    result[itemKey] = {
+      name: itemObj.name,
+      price: prevClose,
+      prevPrice: prevClose,
+      candles: candles,
+      min: itemObj.min,
+      max: itemObj.max,
+      base: itemObj.base
+    };
   });
 
-  if (needsUpdate && isPrimarySimulator) {
-    update(ref(db), updates);
-  }
+  return result;
 }
 
 function showCategory(cat, element) {
@@ -126,7 +258,10 @@ function showCategory(cat, element) {
 
   if (!categories[cat]) return;
 
-  categories[cat].forEach(name => {
+  const currentDataset = latestFirebaseData || generateLocalDataset(cat);
+
+  categories[cat].forEach(itemObj => {
+    const name = itemObj.name;
     const itemKey = name.replace(/[^a-zA-Z0-9]/g, '_');
     const container = document.createElement("div");
     container.className = "stock-card";
@@ -144,8 +279,8 @@ function showCategory(cat, element) {
 
     const ctx = document.getElementById(`canvas_${itemKey}`).getContext("2d");
     
-    const existingCandles = (latestFirebaseData && latestFirebaseData[itemKey] && latestFirebaseData[itemKey].candles) 
-      ? latestFirebaseData[itemKey].candles 
+    const existingCandles = (currentDataset && currentDataset[itemKey] && currentDataset[itemKey].candles) 
+      ? currentDataset[itemKey].candles 
       : [];
 
     charts[name] = new Chart(ctx, {
@@ -185,9 +320,7 @@ function showCategory(cat, element) {
     });
   });
 
-  if (latestFirebaseData) {
-    updateUIWithPrices(latestFirebaseData);
-  }
+  updateUIWithPrices(currentDataset);
 }
 
 function updateUIWithPrices(data) {
@@ -215,103 +348,57 @@ function updateUIWithPrices(data) {
   });
 }
 
-// УЛТРА-РЕАЛНА СИМУЛАЦИЈА: Ажурирање на секои 12 секунди за 1-2 случајни тикери
-function startStockMarketSimulation() {
+// Локален мирен мотор за приказ без потреба од директно пишување во базата
+function startSmoothDisplayEngine() {
   setInterval(() => {
-    if (!latestFirebaseData || !isPrimarySimulator) return;
+    if (!categories[currentCategory]) return;
 
-    const allKeys = Object.keys(latestFirebaseData);
-    if (allKeys.length === 0) return;
-
-    const updates = {};
     const now = Date.now();
+    const activeDataset = latestFirebaseData || {};
 
-    // Избираме само 1 или 2 средства да сменат цена (останатите миуваат)
-    const numberOfAssetsToUpdate = Math.floor(Math.random() * 2) + 1; 
+    categories[currentCategory].forEach(itemObj => {
+      const itemKey = itemObj.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const itemData = activeDataset[itemKey] || {
+        name: itemObj.name,
+        price: itemObj.base,
+        prevPrice: itemObj.base,
+        candles: []
+      };
 
-    for (let i = 0; i < numberOfAssetsToUpdate; i++) {
-      const randomKey = allKeys[Math.floor(Math.random() * allKeys.length)];
-      const item = latestFirebaseData[randomKey];
-      if (!item) continue;
+      let openPrice = itemData.price;
+      let closePrice = getDeterministicPrice(itemObj, now);
 
-      let currentPrice = item.price;
+      itemData.prevPrice = openPrice;
+      itemData.price = closePrice;
 
-      // Прати промена САМО за $0.01 до $0.02
-      const change = parseFloat(((Math.random() - 0.49) * 0.03).toFixed(2));
-      let openPrice = currentPrice;
-      let closePrice = parseFloat((openPrice + change).toFixed(2));
-
-      if (closePrice < 1.0) closePrice = 1.0;
-
-      let candles = item.candles ? [...item.candles] : [];
-      let lastCandleTime = item.lastCandleTime || now;
-
-      if (candles.length === 0 || (now - lastCandleTime >= CANDLE_INTERVAL_MS)) {
-        const highPrice = parseFloat((Math.max(openPrice, closePrice) + 0.01).toFixed(2));
-        const lowPrice = parseFloat((Math.max(1.0, Math.min(openPrice, closePrice) - 0.01)).toFixed(2));
-
-        candles.push({
-          x: now,
-          o: openPrice,
-          h: highPrice,
-          l: lowPrice,
-          c: closePrice
-        });
-
-        if (candles.length > 12) {
-          candles.shift();
-        }
-
-        updates[`prices/${randomKey}/lastCandleTime`] = now;
-      } else {
-        let currentCandle = candles[candles.length - 1];
-        currentCandle.c = closePrice;
-        currentCandle.h = parseFloat(Math.max(currentCandle.h, closePrice).toFixed(2));
-        currentCandle.l = parseFloat(Math.min(currentCandle.l, closePrice).toFixed(2));
-        candles[candles.length - 1] = currentCandle;
+      if (itemData.candles && itemData.candles.length > 0) {
+        let lastCandle = itemData.candles[itemData.candles.length - 1];
+        lastCandle.c = closePrice;
+        lastCandle.h = parseFloat(Math.max(lastCandle.h, closePrice).toFixed(2));
+        lastCandle.l = parseFloat(Math.min(lastCandle.l, closePrice).toFixed(2));
       }
 
-      updates[`prices/${randomKey}/prevPrice`] = openPrice;
-      updates[`prices/${randomKey}/price`] = closePrice;
-      updates[`prices/${randomKey}/candles`] = candles;
-    }
+      activeDataset[itemKey] = itemData;
+    });
 
-    if (Object.keys(updates).length > 0) {
-      update(ref(db), updates);
-    }
-
-  }, 12000); // Се случува ретко (на 12 секунди)
-}
-
-function registerAsSimulator() {
-  const leaderRef = ref(db, 'active_simulator');
-
-  onValue(leaderRef, (snapshot) => {
-    const currentLeader = snapshot.val();
-    if (!currentLeader || currentLeader === clientId) {
-      isPrimarySimulator = true;
-      set(leaderRef, clientId);
-      onDisconnect(leaderRef).remove();
-    } else {
-      isPrimarySimulator = false;
-    }
-  });
+    updateUIWithPrices(activeDataset);
+  }, 12000); // Дискретни промени на 12 секунди
 }
 
 window.addEventListener("DOMContentLoaded", () => {
   showCategory("football");
-  registerAsSimulator();
 
+  // Читај во реално време од заштитената база
   const dbRef = ref(db, 'prices');
   onValue(dbRef, (snapshot) => {
     const data = snapshot.val();
-    latestFirebaseData = data;
-    
-    initializeFirebaseData(data);
-    updateUIWithPrices(data);
+    if (data) {
+      latestFirebaseData = data;
+      updateUIWithPrices(data);
+    }
   });
 
-  startStockMarketSimulation();
+  startSmoothDisplayEngine();
 });
 
 window.showCategory = showCategory;
