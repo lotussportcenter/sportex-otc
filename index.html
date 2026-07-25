@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>SportEx OTC Exchange | Institutional Sports Desk</title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- Chart.js + Date Adapter + Financial Candlestick Plugin -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1/build/global/luxon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0/dist/chartjs-adapter-luxon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+  <!-- Chart.js & Financial Plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
 </head>
 <body>
 
@@ -24,13 +24,15 @@
       </div>
     </div>
     <div class="market-status">
-      <span class="status-dot"></span> LIVE OTC MARKET (24/7)
+      <span class="status-dot"></span>
+      <span class="status-text">LIVE OTC MARKET (24/7)</span>
     </div>
   </header>
 
+  <!-- Main App Layout -->
   <main class="main-container">
     
-    <!-- Professional OTC Info Desk Panel -->
+    <!-- Desk Info Panel -->
     <section class="otc-panel">
       <div class="panel-header">
         <h2>Global OTC Institutional Trading Desk</h2>
@@ -58,7 +60,7 @@
         <div class="info-card">
           <h3>Execution & Benefits</h3>
           <ul>
-            <li><strong>Zero Price Slippage:</strong> Block trades execute at an exact agreed rate without public order book impact.</li>
+            <li><strong>Zero Price Slippage:</strong> Block trades execute at exact agreed rates without public order book impact.</li>
             <li><strong>Institutional Privacy:</strong> Trades remain off public ledgers to safeguard proprietary trading strategies.</li>
             <li><strong>Dedicated Coverage:</strong> Tailored liquidity quotes and direct settlement support from specialized traders.</li>
           </ul>
@@ -69,52 +71,58 @@
           <ol>
             <li><strong>Request Quote:</strong> Submit desired asset and volume directly to the OTC Desk.</li>
             <li><strong>Price Lock:</strong> Receive a firm, binding all-in price quote based on live market depth.</li>
-            <li><strong>Instant Settlement:</strong> Secure peer-to-peer asset delivery upon trade confirmation.</li>
+            <li><strong>Instant Settlement:</strong> Delivery versus payment (DVP) via standard USDT settlement network.</li>
           </ol>
         </div>
 
         <div class="info-card fee-card">
-          <h3>Commission & Guarantees</h3>
+          <h3>Fee Schedule & Limits</h3>
           <div class="fee-row">
-            <span>Buy Orders Fee:</span>
-            <strong>2.5% Commission</strong>
+            <span>Minimum Order Size</span>
+            <strong>$1,000 USDT</strong>
           </div>
           <div class="fee-row">
-            <span>Sell Orders Fee:</span>
-            <strong>1.5% Commission</strong>
+            <span>Standard Desk Commission</span>
+            <strong>0.15%</strong>
           </div>
-          <p class="legal-guarantee">✓ The OTC Desk has a strict legal obligation to fulfill and execute client payouts.</p>
+          <div class="fee-row">
+            <span>Large Block (> $50k)</span>
+            <strong>Custom Tier</strong>
+          </div>
+          <p class="legal-guarantee">🛡️ Official Guarantee: All trades are settled securely via verified OTC protocols.</p>
         </div>
       </div>
 
       <div class="disclaimer-box">
-        <p><strong>Regulatory Compliance Notice:</strong> U.S. OTC trading desks operate under FinCEN registration as Money Services Businesses (MSBs), strictly adhering to the Bank Secrecy Act (BSA) and Anti-Money Laundering (AML) standards, as well as applicable State Money Transmitter Licenses (MTLs). Digital asset securities transactions comply with SEC frameworks to ensure complete counterparty protection and payout integrity.</p>
+        <strong>Institutional Risk Notice:</strong> OTC sports stock trading involves market exposure. Rates are updated continuously via institutional feeds. All quotes are subject to final desk confirmation prior to execution.
       </div>
     </section>
 
-    <!-- Market Navigation Board -->
+    <!-- Markets Section -->
     <section class="market-section">
       <div class="section-title">
-        <h2>Institutional Market Board</h2>
-        <p>Select asset class to view live candlestick price charts</p>
+        <h2>Live Spot Markets</h2>
+        <p>Real-time OTC Asset Quotations</p>
       </div>
 
-      <div class="category-tabs">
+      <!-- Categories Filter Tabs -->
+      <nav class="category-tabs">
         <button class="tab-btn active" onclick="showCategory('football', this)">⚽ Football</button>
-        <button class="tab-btn" onclick="showCategory('basketball', this)">🏀 NBA</button>
+        <button class="tab-btn" onclick="showCategory('basketball', this)">🏀 Basketball</button>
         <button class="tab-btn" onclick="showCategory('nfl', this)">🏈 NFL</button>
         <button class="tab-btn" onclick="showCategory('nhl', this)">🏒 NHL</button>
         <button class="tab-btn" onclick="showCategory('players', this)">⭐ Players</button>
-      </div>
+      </nav>
 
-      <!-- Asset Grid Container -->
+      <!-- Dynamic Stock Grid -->
       <div id="stocks" class="stock-grid"></div>
     </section>
 
   </main>
 
+  <!-- Footer -->
   <footer class="footer">
-    <p>&copy; 2026 SportEx OTC Exchange. All rights reserved. Professional Grade Sports Assets Platform.</p>
+    <p>© 2026 SportEx Global OTC Exchange. All rights reserved. Professional Institutional Trading Services.</p>
   </footer>
 
   <script type="module" src="app.js"></script>
