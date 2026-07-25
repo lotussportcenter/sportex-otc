@@ -15,6 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// Целосен JSON сет со сите категории, тимови, играчи и почетни свеќички
 const categories = {
   football: [
     { name: "Real Madrid", base: 185.50, min: 140, max: 280 },
@@ -176,63 +177,59 @@ let latestFirebaseData = null;
 let currentCategory = "football";
 const CANDLE_INTERVAL_MS = 60000;
 
-function initializeFirebaseData(existingData) {
+function checkAndAutoFillDatabase(existingData) {
+  if (existingData && Object.keys(existingData).length > 0) return; // Веќе има податоци
+
+  console.log("Базата е празна. Автоматски креирам JSON пакет со сите тимови и свеќички...");
   const updates = {};
-  let needsUpdate = false;
   const now = Date.now();
 
   Object.keys(categories).forEach(cat => {
     categories[cat].forEach(itemObj => {
       const itemKey = itemObj.name.replace(/[^a-zA-Z0-9]/g, '_');
-      if (!existingData || !existingData[itemKey] || !existingData[itemKey].candles) {
-        needsUpdate = true;
-        let initialCandles = [];
-        let prevClose = itemObj.base;
+      let initialCandles = [];
+      let prevClose = itemObj.base;
+      
+      for (let i = 10; i >= 1; i--) {
+        const open = prevClose;
+        const delta = parseFloat(((Math.random() - 0.49) * 0.05).toFixed(2));
+        let close = parseFloat((open + delta).toFixed(2));
         
-        for (let i = 10; i >= 1; i--) {
-          const open = prevClose;
-          const delta = parseFloat(((Math.random() - 0.49) * 0.05).toFixed(2));
-          let close = parseFloat((open + delta).toFixed(2));
-          
-          if (close < itemObj.min) close = itemObj.min;
-          if (close > itemObj.max) close = itemObj.max;
+        if (close < itemObj.min) close = itemObj.min;
+        if (close > itemObj.max) close = itemObj.max;
 
-          const high = parseFloat((Math.max(open, close) + 0.02).toFixed(2));
-          const low = parseFloat((Math.max(itemObj.min, Math.min(open, close) - 0.02)).toFixed(2));
-          
-          initialCandles.push({
-            x: now - (i * CANDLE_INTERVAL_MS),
-            o: open,
-            h: high,
-            l: low,
-            c: close
-          });
-          prevClose = close;
-        }
-
-        updates[itemKey] = {
-          name: itemObj.name,
-          category: cat,
-          price: prevClose,
-          prevPrice: prevClose,
-          candles: initialCandles,
-          min: itemObj.min,
-          max: itemObj.max,
-          base: itemObj.base,
-          lastCandleTime: now
-        };
+        const high = parseFloat((Math.max(open, close) + 0.02).toFixed(2));
+        const low = parseFloat((Math.max(itemObj.min, Math.min(open, close) - 0.02)).toFixed(2));
+        
+        initialCandles.push({
+          x: now - (i * CANDLE_INTERVAL_MS),
+          o: open,
+          h: high,
+          l: low,
+          c: close
+        });
+        prevClose = close;
       }
+
+      updates[itemKey] = {
+        name: itemObj.name,
+        category: cat,
+        price: prevClose,
+        prevPrice: prevClose,
+        candles: initialCandles,
+        min: itemObj.min,
+        max: itemObj.max,
+        base: itemObj.base,
+        lastCandleTime: now
+      };
     });
   });
 
-  if (needsUpdate) {
-    update(ref(db, 'prices'), updates);
-  }
+  set(ref(db, 'prices'), updates);
 }
 
 function showCategory(cat, element) {
   currentCategory = cat;
-  
   if (element) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     element.classList.add('active');
@@ -273,11 +270,7 @@ function showCategory(cat, element) {
         datasets: [{ 
           label: 'Price (USDT)', 
           data: existingCandles,
-          color: {
-            up: '#00ff88',
-            down: '#ff4949',
-            unchanged: '#888888',
-          }
+          color: { up: '#00ff88', down: '#ff4949', unchanged: '#888888' }
         }] 
       },
       options: { 
@@ -315,7 +308,6 @@ function updateUIWithPrices(data) {
     
     if (priceEl && item.price !== undefined) {
       priceEl.innerText = `${item.price.toFixed(2)} USDT`;
-
       if (item.prevPrice !== undefined) {
         if (item.price < item.prevPrice) {
           priceEl.classList.add('down');
@@ -335,7 +327,6 @@ function updateUIWithPrices(data) {
 function startSharedMarketSimulation() {
   setInterval(() => {
     if (!latestFirebaseData) return;
-
     const allKeys = Object.keys(latestFirebaseData);
     if (allKeys.length === 0) return;
 
@@ -359,16 +350,9 @@ function startSharedMarketSimulation() {
       const highPrice = parseFloat((Math.max(openPrice, closePrice) + 0.02).toFixed(2));
       const lowPrice = parseFloat((Math.max(item.min || 1.0, Math.min(openPrice, closePrice) - 0.02)).toFixed(2));
 
-      candles.push({
-        x: now,
-        o: openPrice,
-        h: highPrice,
-        l: lowPrice,
-        c: closePrice
-      });
-
+      candles.push({ x: now, o: openPrice, h: highPrice, l: lowPrice, c: closePrice });
       if (candles.length > 15) candles.shift();
-      updatesTime(randomKey, now);
+      update(ref(db), { [`prices/${randomKey}/lastCandleTime`]: now });
     } else {
       let currentCandle = candles[candles.length - 1];
       currentCandle.c = closePrice;
@@ -383,12 +367,7 @@ function startSharedMarketSimulation() {
     updates[`prices/${randomKey}/candles`] = candles;
 
     update(ref(db), updates);
-
   }, 12000);
-}
-
-function updatesTime(randomKey, now) {
-  update(ref(db), { [`prices/${randomKey}/lastCandleTime`]: now });
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -398,10 +377,10 @@ window.addEventListener("DOMContentLoaded", () => {
   onValue(dbRef, (snapshot) => {
     const data = snapshot.val();
     if (!data) {
-      initializeFirebaseData(null);
+      checkAndAutoFillDatabase(null);
     } else {
       latestFirebaseData = data;
-      initializeFirebaseData(data);
+      checkAndAutoFillDatabase(data);
       updateUIWithPrices(data);
     }
   });
