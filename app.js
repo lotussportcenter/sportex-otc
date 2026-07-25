@@ -56,7 +56,6 @@ let charts = {};
 let latestFirebaseData = null;
 let currentCategory = "football";
 
-// Креира почетни податоци за свеќици доколку базата е празна
 function initializeFirebaseData(existingData) {
   const updates = {};
   let needsUpdate = false;
@@ -67,21 +66,20 @@ function initializeFirebaseData(existingData) {
       const itemKey = item.replace(/[^a-zA-Z0-9]/g, '_');
       if (!existingData || !existingData[itemKey] || !existingData[itemKey].candles) {
         needsUpdate = true;
-        const basePrice = parseFloat((Math.random() * (120 - 40) + 40).toFixed(2));
+        const basePrice = parseFloat((Math.random() * (140 - 40) + 40).toFixed(2));
         
         let initialCandles = [];
         let prevClose = basePrice;
         
-        // 10 почетни свеќици во минатото
-        for (let i = 10; i >= 1; i--) {
+        for (let i = 12; i >= 1; i--) {
           const open = prevClose;
-          const delta = parseFloat((Math.random() * 0.6 - 0.3).toFixed(2));
+          const delta = parseFloat((Math.random() * 0.4 - 0.2).toFixed(2));
           const close = parseFloat((open + delta).toFixed(2));
-          const high = parseFloat((Math.max(open, close) + Math.random() * 0.2).toFixed(2));
-          const low = parseFloat((Math.min(open, close) - Math.random() * 0.2).toFixed(2));
+          const high = parseFloat((Math.max(open, close) + Math.random() * 0.1).toFixed(2));
+          const low = parseFloat((Math.min(open, close) - Math.random() * 0.1).toFixed(2));
           
           initialCandles.push({
-            x: now - (i * 15000),
+            x: now - (i * 2000),
             o: open,
             h: high,
             l: low,
@@ -106,7 +104,6 @@ function initializeFirebaseData(existingData) {
   }
 }
 
-// Приказ на избраната категорија
 function showCategory(cat, element) {
   currentCategory = cat;
   
@@ -168,7 +165,7 @@ function showCategory(cat, element) {
           x: { 
             type: 'time',
             time: { unit: 'second' },
-            ticks: { color: '#848e9c', maxTicksLimit: 5 },
+            ticks: { color: '#848e9c', maxTicksLimit: 4 },
             grid: { color: '#1e2329' }
           }, 
           y: { 
@@ -186,7 +183,6 @@ function showCategory(cat, element) {
   }
 }
 
-// Го ажурира корисничкиот интерфејс и графиците
 function updateUIWithPrices(data) {
   if (!data) return;
   Object.keys(data).forEach(key => {
@@ -204,7 +200,7 @@ function updateUIWithPrices(data) {
   });
 }
 
-// СИМУЛАЦИЈА НА БЕРЗА - Секои 15 секунди
+// СИМУЛАЦИЈА - Менување цени на секои 2 секунди
 function startStockMarketSimulation() {
   setInterval(() => {
     if (!latestFirebaseData) return;
@@ -217,16 +213,16 @@ function startStockMarketSimulation() {
       let currentPrice = item.price;
       const initialPrice = item.initialPrice || currentPrice;
 
-      // Мала промена (-0.3% до +0.3%)
-      const percentageChange = (Math.random() * 0.6 - 0.3) / 100;
+      // Микро-промена за динамичност (-0.15% до +0.15%)
+      const percentageChange = (Math.random() * 0.3 - 0.15) / 100;
       let openPrice = currentPrice;
       let closePrice = openPrice * (1 + percentageChange);
 
       if (closePrice < 1.0) closePrice = 1.0;
       closePrice = parseFloat(closePrice.toFixed(2));
 
-      const highPrice = parseFloat((Math.max(openPrice, closePrice) + Math.random() * 0.15).toFixed(2));
-      const lowPrice = parseFloat((Math.min(openPrice, closePrice) - Math.random() * 0.15).toFixed(2));
+      const highPrice = parseFloat((Math.max(openPrice, closePrice) + Math.random() * 0.08).toFixed(2));
+      const lowPrice = parseFloat((Math.min(openPrice, closePrice) - Math.random() * 0.08).toFixed(2));
 
       let candles = item.candles ? [...item.candles] : [];
       
@@ -238,7 +234,7 @@ function startStockMarketSimulation() {
         c: closePrice
       });
 
-      // Чувај максимум 15 свеќици на графикот
+      // Чувај 15 свеќици
       if (candles.length > 15) {
         candles.shift();
       }
@@ -250,7 +246,7 @@ function startStockMarketSimulation() {
 
     update(ref(db), updates);
 
-  }, 15000); // 15 секунди
+  }, 2000); // Точно на секои 2 секунди!
 }
 
 window.addEventListener("DOMContentLoaded", () => {
