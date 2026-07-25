@@ -58,7 +58,7 @@ let currentCategory = "football";
 let isPrimarySimulator = false;
 const clientId = Math.random().toString(36).substring(2, 9);
 
-const CANDLE_INTERVAL_MS = 30000; // Нова свеќичка на секои 30 секунди (многу смирено и прегледно)
+const CANDLE_INTERVAL_MS = 60000; // Нова свеќичка на секоја 1 минута (многу стабилно)
 
 function initializeFirebaseData(existingData) {
   const updates = {};
@@ -70,17 +70,18 @@ function initializeFirebaseData(existingData) {
       const itemKey = item.replace(/[^a-zA-Z0-9]/g, '_');
       if (!existingData || !existingData[itemKey] || !existingData[itemKey].candles) {
         needsUpdate = true;
-        const basePrice = parseFloat((Math.random() * (130 - 50) + 50).toFixed(2));
+        const basePrice = parseFloat((Math.random() * (120 - 40) + 40).toFixed(2));
         
         let initialCandles = [];
         let prevClose = basePrice;
         
-        for (let i = 12; i >= 1; i--) {
+        for (let i = 10; i >= 1; i--) {
           const open = prevClose;
-          const delta = parseFloat(((Math.random() - 0.49) * 0.08).toFixed(2));
+          // Варијација од само $0.01 до $0.03
+          const delta = parseFloat(((Math.random() - 0.49) * 0.04).toFixed(2));
           const close = parseFloat(Math.max(1.0, open + delta).toFixed(2));
-          const high = parseFloat((Math.max(open, close) + Math.random() * 0.02).toFixed(2));
-          const low = parseFloat((Math.max(1.0, Math.min(open, close) - Math.random() * 0.02)).toFixed(2));
+          const high = parseFloat((Math.max(open, close) + 0.01).toFixed(2));
+          const low = parseFloat((Math.max(1.0, Math.min(open, close) - 0.01)).toFixed(2));
           
           initialCandles.push({
             x: now - (i * CANDLE_INTERVAL_MS),
@@ -170,7 +171,7 @@ function showCategory(cat, element) {
         scales: { 
           x: { 
             type: 'time',
-            time: { unit: 'second' },
+            time: { unit: 'minute' },
             ticks: { color: '#848e9c', maxTicksLimit: 4 },
             grid: { color: '#1e2329' }
           }, 
@@ -214,7 +215,7 @@ function updateUIWithPrices(data) {
   });
 }
 
-// РЕАЛНА РАНДОМ СИМУЛАЦИЈА: Се менуваат само неколку случајни тикери на секои 3 секунди
+// УЛТРА-РЕАЛНА СИМУЛАЦИЈА: Ажурирање на секои 12 секунди за 1-2 случајни тикери
 function startStockMarketSimulation() {
   setInterval(() => {
     if (!latestFirebaseData || !isPrimarySimulator) return;
@@ -225,7 +226,7 @@ function startStockMarketSimulation() {
     const updates = {};
     const now = Date.now();
 
-    // Избираме само 2-3 случајни позиции за промена (за да нема масовно треперење)
+    // Избираме само 1 или 2 средства да сменат цена (останатите миуваат)
     const numberOfAssetsToUpdate = Math.floor(Math.random() * 2) + 1; 
 
     for (let i = 0; i < numberOfAssetsToUpdate; i++) {
@@ -235,8 +236,8 @@ function startStockMarketSimulation() {
 
       let currentPrice = item.price;
 
-      // Многу мала промена (од -$0.02 до +$0.02)
-      const change = parseFloat(((Math.random() - 0.49) * 0.04).toFixed(2));
+      // Прати промена САМО за $0.01 до $0.02
+      const change = parseFloat(((Math.random() - 0.49) * 0.03).toFixed(2));
       let openPrice = currentPrice;
       let closePrice = parseFloat((openPrice + change).toFixed(2));
 
@@ -246,8 +247,8 @@ function startStockMarketSimulation() {
       let lastCandleTime = item.lastCandleTime || now;
 
       if (candles.length === 0 || (now - lastCandleTime >= CANDLE_INTERVAL_MS)) {
-        const highPrice = parseFloat((Math.max(openPrice, closePrice) + Math.random() * 0.01).toFixed(2));
-        const lowPrice = parseFloat((Math.max(1.0, Math.min(openPrice, closePrice) - Math.random() * 0.01)).toFixed(2));
+        const highPrice = parseFloat((Math.max(openPrice, closePrice) + 0.01).toFixed(2));
+        const lowPrice = parseFloat((Math.max(1.0, Math.min(openPrice, closePrice) - 0.01)).toFixed(2));
 
         candles.push({
           x: now,
@@ -257,7 +258,7 @@ function startStockMarketSimulation() {
           c: closePrice
         });
 
-        if (candles.length > 15) {
+        if (candles.length > 12) {
           candles.shift();
         }
 
@@ -279,7 +280,7 @@ function startStockMarketSimulation() {
       update(ref(db), updates);
     }
 
-  }, 3000); // Се извршува на секои 3 секунди
+  }, 12000); // Се случува ретко (на 12 секунди)
 }
 
 function registerAsSimulator() {
