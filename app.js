@@ -1,12 +1,12 @@
-// Firebase config (replace with your own project keys)
+// Firebase config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSy...", // Погледнете ги чекорите подолу каде да го ископирате API Key
+  authDomain: "sportex-otc.firebaseapp.com",
+  databaseURL: "https://sportex-otc-default-rtdb.firebaseio.com",
+  projectId: "sportex-otc",
+  storageBucket: "sportex-otc.appspot.com",
+  messagingSenderId: "112803547728122503373",
+  appId: "1:112803547728122503373:web:ВашиотAppId"
 };
 
 // Initialize Firebase
