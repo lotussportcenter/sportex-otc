@@ -58,6 +58,8 @@ let currentCategory = "football";
 let isPrimarySimulator = false;
 const clientId = Math.random().toString(36).substring(2, 9);
 
+const CANDLE_INTERVAL_MS = 15000; // Нова свеќичка на секои 15 секунди за стабилен и мирен график
+
 function initializeFirebaseData(existingData) {
   const updates = {};
   let needsUpdate = false;
@@ -81,7 +83,7 @@ function initializeFirebaseData(existingData) {
           const low = parseFloat((Math.max(1.0, Math.min(open, close) - Math.random() * 0.15)).toFixed(2));
           
           initialCandles.push({
-            x: now - (i * 2000),
+            x: now - (i * CANDLE_INTERVAL_MS),
             o: open,
             h: high,
             l: low,
@@ -96,7 +98,8 @@ function initializeFirebaseData(existingData) {
           initialPrice: basePrice,
           price: prevClose,
           prevPrice: prevClose,
-          candles: initialCandles
+          candles: initialCandles,
+          lastCandleTime: now
         };
       }
     });
@@ -211,7 +214,6 @@ function updateUIWithPrices(data) {
   });
 }
 
-// Секој тим си има сопствена независна логика на промена
 function startStockMarketSimulation() {
   setInterval(() => {
     if (!latestFirebaseData || !isPrimarySimulator) return;
@@ -223,32 +225,43 @@ function startStockMarketSimulation() {
       const item = latestFirebaseData[key];
       let currentPrice = item.price;
 
-      // Независна промена за секоја цена посебно (-0.4% до +0.4%)
-      const randomFactor = (Math.random() - 0.49) * 0.008;
+      // Суптилни промени на цената на секои 2 секунди
+      const randomFactor = (Math.random() - 0.49) * 0.005;
       let openPrice = currentPrice;
       let closePrice = openPrice * (1 + randomFactor);
 
       if (closePrice < 1.0) closePrice = 1.0;
       closePrice = parseFloat(closePrice.toFixed(2));
 
-      // Различни high/low за секоја свеќица
-      const highDelta = Math.random() * 0.12;
-      const lowDelta = Math.random() * 0.12;
-      const highPrice = parseFloat((Math.max(openPrice, closePrice) + highDelta).toFixed(2));
-      const lowPrice = parseFloat((Math.max(1.0, Math.min(openPrice, closePrice) - lowDelta)).toFixed(2));
-
       let candles = item.candles ? [...item.candles] : [];
-      
-      candles.push({
-        x: now,
-        o: openPrice,
-        h: highPrice,
-        l: lowPrice,
-        c: closePrice
-      });
+      let lastCandle = candles[candles.length - 1];
+      let lastTime = item.lastCandleTime || (lastCandle ? lastCandle.x : now);
 
-      if (candles.length > 15) {
-        candles.shift();
+      // Ажурирај ја моменталната свеќица или отвори нова ако поминале 15 секунди
+      if (!lastCandle || (now - lastTime >= CANDLE_INTERVAL_MS)) {
+        // Отворање нова свеќица
+        const highPrice = parseFloat((Math.max(openPrice, closePrice) + Math.random() * 0.08).toFixed(2));
+        const lowPrice = parseFloat((Math.max(1.0, Math.min(openPrice, closePrice) - Math.random() * 0.08)).toFixed(2));
+
+        candles.push({
+          x: now,
+          o: openPrice,
+          h: highPrice,
+          l: lowPrice,
+          c: closePrice
+        });
+
+        if (candles.length > 15) {
+          candles.shift();
+        }
+
+        updates[`prices/${key}/lastCandleTime`] = now;
+      } else {
+        // Проширување на тековната свеќица (рамномерно движење)
+        lastCandle.c = closePrice;
+        lastCandle.h = parseFloat(Math.max(lastCandle.h, closePrice).toFixed(2));
+        lastCandle.l = parseFloat(Math.min(lastCandle.l, closePrice).toFixed(2));
+        candles[candles.length - 1] = lastCandle;
       }
 
       updates[`prices/${key}/prevPrice`] = openPrice;
@@ -258,10 +271,9 @@ function startStockMarketSimulation() {
 
     update(ref(db), updates);
 
-  }, 2000);
+  }, 2000); // Цената ажурира на 2 секунди, а свеќицата минато формира на 15 секунди
 }
 
-// Firebase Master Lock систем (Обезбедува 1 централен симулатор)
 function registerAsSimulator() {
   const leaderRef = ref(db, 'active_simulator');
 
