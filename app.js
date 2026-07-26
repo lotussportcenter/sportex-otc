@@ -14,7 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const categories = {
+const categoriesData = {
     football: [
         { name: "Real Madrid", base: 185.50 },
         { name: "Manchester City", base: 178.20 },
@@ -23,9 +23,9 @@ const categories = {
         { name: "Bayern Munich", base: 155.00 },
         { name: "Liverpool", base: 150.30 },
         { name: "Paris Saint-Germain", base: 145.00 },
-        { name: "Inter", base: 125.00 },
+        { name: "Inter Milan", base: 125.00 },
         { name: "Juventus", base: 115.00 },
-        { name: "Milan", base: 110.00 }
+        { name: "AC Milan", base: 110.00 }
     ],
     basketball: [
         { name: "Boston Celtics", base: 195.00 },
@@ -47,7 +47,7 @@ const categories = {
         { name: "Florida Panthers", base: 180.00 },
         { name: "Edmonton Oilers", base: 175.00 },
         { name: "Colorado Avalanche", base: 170.00 },
-        { name: "Rangers New York", base: 165.00 }
+        { name: "New York Rangers", base: 165.00 }
     ],
     formula1: [
         { name: "Red Bull Racing", base: 230.00 },
@@ -77,31 +77,45 @@ window.showCategory = function(category, btnElement) {
     renderMarket();
 };
 
-async function initDatabase() {
+async function initMarket() {
     const dbRef = ref(db, 'market');
     const snapshot = await get(dbRef);
+    
     if (!snapshot.exists()) {
         let initialData = {};
-        for (const [category, items] of Object.entries(categories)) {
-            initialData[category] = items.map(item => ({
+        for (const [cat, items] of Object.entries(categoriesData)) {
+            initialData[cat] = items.map(item => ({
                 name: item.name,
                 price: item.base,
-                prevPrice: item.base,
-                history: [item.base]
+                prevPrice: item.base
             }));
         }
         await set(dbRef, initialData);
     }
-}
 
-function listenToMarket() {
-    const dbRef = ref(db, 'market');
-    onValue(dbRef, (snapshot) => {
-        if (snapshot.exists()) {
-            marketData = snapshot.val();
+    onValue(dbRef, (snap) => {
+        if (snap.exists()) {
+            marketData = snap.val();
             renderMarket();
         }
     });
+
+    // Автоматска симулација на флуктуација на цените на секои 5 секунди
+    setInterval(() => {
+        get(dbRef).then((snap) => {
+            if (!snap.exists()) return;
+            let data = snap.val();
+            for (const cat in data) {
+                data[cat].forEach(item => {
+                    item.prevPrice = item.price;
+                    let change = (Math.random() * 4 - 1.95) / 100;
+                    item.price = Math.max(1.00, item.price * (1 + change));
+                    item.price = parseFloat(item.price.toFixed(2));
+                });
+            }
+            set(dbRef, data);
+        });
+    }, 5000);
 }
 
 function renderMarket() {
@@ -112,7 +126,7 @@ function renderMarket() {
     const items = marketData[currentCategory] || [];
 
     if (items.length === 0) {
-        container.innerHTML = '<div style="color: #848e9c; padding: 20px; text-align: center;">Loading assets...</div>';
+        container.innerHTML = '<div style="color: #848e9c; padding: 20px; text-align: center;">Loading liquidity pools...</div>';
         return;
     }
 
@@ -123,8 +137,7 @@ function renderMarket() {
         const diff = (item.price - (item.prevPrice || item.price)).toFixed(2);
 
         const card = document.createElement('div');
-        card.className = 'market-card';
-        card.style.cssText = 'background: #151a21; border: 1px solid #262d37; padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;';
+        card.style.cssText = 'background: #151a21; border: 1px solid #262d37; padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
         
         card.innerHTML = `
             <div>
@@ -132,10 +145,10 @@ function renderMarket() {
                 <div style="font-size: 11px; color: #848e9c; text-transform: uppercase; letter-spacing: 0.5px;">OTC Token Unit</div>
             </div>
             <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: flex-end;">
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: #eaecef;">
+                <div style="font-family: monospace; font-size: 18px; font-weight: 700; color: #eaecef;">
                     ${item.price.toFixed(2)} USDT
                 </div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; ${colorClass}">
+                <div style="font-family: monospace; font-size: 13px; font-weight: 600; ${colorClass}">
                     ${sign}${diff}
                 </div>
             </div>
@@ -144,26 +157,4 @@ function renderMarket() {
     });
 }
 
-function simulateFreeMarket() {
-    const dbRef = ref(db, 'market');
-    get(dbRef).then((snapshot) => {
-        if (!snapshot.exists()) return;
-        let data = snapshot.val();
-
-        for (const category in data) {
-            data[category].forEach(item => {
-                item.prevPrice = item.price;
-                let percentChange = (Math.random() * 5 - 2.48) / 100;
-                item.price = item.price * (1 + percentChange);
-                if (item.price < 1.00) item.price = 1.00;
-                item.price = parseFloat(item.price.toFixed(2));
-            });
-        }
-        set(dbRef, data);
-    });
-}
-
-initDatabase().then(() => {
-    listenToMarket();
-    setInterval(simulateFreeMarket, 5000);
-});
+initMarket();
