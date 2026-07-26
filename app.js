@@ -102,6 +102,17 @@ const categories = {
         { name: "Rangers New York", base: 165.00 },
         { name: "Dallas Stars", base: 160.00 }
     ],
+    formula1: [
+        { name: "Red Bull Racing", base: 230.00 },
+        { name: "Ferrari F1 Team", base: 220.00 },
+        { name: "Mercedes AMG F1", base: 210.00 },
+        { name: "McLaren F1", base: 195.00 },
+        { name: "Aston Martin F1", base: 160.00 },
+        { name: "Max Verstappen", base: 240.00 },
+        { name: "Lewis Hamilton", base: 215.00 },
+        { name: "Charles Leclerc", base: 205.00 },
+        { name: "Lando Norris", base: 190.00 }
+    ],
     players: [
         { name: "Kylian Mbappe", base: 220.00 },
         { name: "Erling Haaland", base: 215.00 },
@@ -118,6 +129,9 @@ const categories = {
     ]
 };
 
+let currentCategory = 'football';
+let marketData = {};
+
 async function initDatabase() {
     const dbRef = ref(db, 'market');
     const snapshot = await get(dbRef);
@@ -128,16 +142,58 @@ async function initDatabase() {
                 name: item.name,
                 price: item.base,
                 prevPrice: item.base,
-                history: [item.base, item.base] // Иницијална историја за свеќите
+                history: [item.base, item.base]
             }));
         }
         await set(dbRef, initialData);
     }
 }
 
-initDatabase();
+function listenToMarket() {
+    const dbRef = ref(db, 'market');
+    onValue(dbRef, (snapshot) => {
+        if (snapshot.exists()) {
+            marketData = snapshot.val();
+            renderMarket();
+        }
+    });
+}
 
-// Функция за слободно движење на пазарот со ажурирање на историјата за свеќите
+function renderMarket() {
+    const container = document.getElementById('marketContainer') || document.getElementById('assetsGrid');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    const items = marketData[currentCategory] || [];
+
+    items.forEach(item => {
+        const isUp = item.price >= (item.prevPrice || item.price);
+        const colorClass = isUp ? 'color: #0ecb81;' : 'color: #f6465d;';
+        const sign = isUp ? '+' : '';
+        const diff = (item.price - (item.prevPrice || item.price)).toFixed(2);
+
+        const card = document.createElement('div');
+        card.className = 'market-card';
+        card.style.cssText = 'background: #151a21; border: 1px solid #262d37; padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;';
+        
+        card.innerHTML = `
+            <div>
+                <div style="font-weight: 600; font-size: 16px; color: #eaecef; margin-bottom: 4px;">${item.name}</div>
+                <div style="font-size: 11px; color: #848e9c; text-transform: uppercase; letter-spacing: 0.5px;">OTC Token Unit</div>
+            </div>
+            <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: #eaecef;">
+                    ${item.price.toFixed(2)} USDT
+                </div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; ${colorClass}">
+                    ${sign}${diff}
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
 function simulateFreeMarket() {
     const dbRef = ref(db, 'market');
     get(dbRef).then((snapshot) => {
@@ -147,16 +203,11 @@ function simulateFreeMarket() {
         for (const category in data) {
             data[category].forEach(item => {
                 item.prevPrice = item.price;
-                
-                // Случаен процент на слободна промена
                 let percentChange = (Math.random() * 5 - 2.48) / 100;
                 item.price = item.price * (1 + percentChange);
-                
-                // Минимален заштитен праг
                 if (item.price < 1.00) item.price = 1.00;
                 item.price = parseFloat(item.price.toFixed(2));
 
-                // Следење на историјата за свеќите (чува последни 15 ценовни точки)
                 if (!item.history) item.history = [];
                 item.history.push(item.price);
                 if (item.history.length > 15) {
@@ -168,5 +219,7 @@ function simulateFreeMarket() {
     });
 }
 
-// Извршување на движењето на секои 5 секунди
-setInterval(simulateFreeMarket, 5000);
+initDatabase().then(() => {
+    listenToMarket();
+    setInterval(simulateFreeMarket, 5000);
+});
