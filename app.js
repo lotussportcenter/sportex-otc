@@ -1,237 +1,145 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyD5XFfR00-OsVOYtmZmZtHegKxDZEW4s",
-    authDomain: "sportex-otc.firebaseapp.com",
-    databaseURL: "https://sportex-otc-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "sportex-otc",
-    storageBucket: "sportex-otc.appspot.com",
-    messagingSenderId: "938427841690",
-    appId: "1:938427841690:web:8cb1d9bd74107ad588f323",
-    measurementId: "G-3H2H9V3ZZF"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-const categories = {
-    football: [
-        { name: "Real Madrid", base: 185.50 },
-        { name: "Manchester City", base: 178.20 },
-        { name: "Arsenal", base: 142.00 },
-        { name: "Barcelona", base: 165.80 },
-        { name: "Bayern Munich", base: 155.00 },
-        { name: "Liverpool", base: 150.30 },
-        { name: "Paris Saint-Germain", base: 145.00 },
-        { name: "Inter", base: 125.00 },
-        { name: "Juventus", base: 115.00 },
-        { name: "Milan", base: 110.00 },
-        { name: "Atalanta", base: 95.00 },
-        { name: "Como", base: 60.00 },
-        { name: "Manchester United", base: 135.00 },
-        { name: "Aston Villa", base: 105.00 },
-        { name: "Chelsea", base: 130.00 },
-        { name: "Newcastle", base: 112.00 },
-        { name: "Napoli", base: 118.00 },
-        { name: "Roma", base: 98.00 },
-        { name: "Fiorentina", base: 85.00 },
-        { name: "Lazio", base: 90.00 },
-        { name: "Borussia Dortmund", base: 120.00 },
-        { name: "RB Leipzig", base: 95.00 },
-        { name: "VfB Stuttgart", base: 80.00 },
-        { name: "Hoffenheim", base: 65.00 },
-        { name: "Bayern Leverkusen", base: 130.00 },
-        { name: "RC Lens", base: 70.00 },
-        { name: "Lille OSC", base: 75.00 },
-        { name: "Olympique Lyon", base: 88.00 },
-        { name: "Olympique Marseille", base: 92.00 },
-        { name: "Atlético Madrid", base: 125.00 },
-        { name: "Athletic Bilbao", base: 82.00 },
-        { name: "Real Sociedad", base: 86.00 },
-        { name: "Villarreal", base: 78.00 },
-        { name: "Sevilla", base: 80.00 },
-        { name: "Valencia", base: 72.00 },
-        { name: "Betis", base: 75.00 }
+const sportData = {
+    "NFL": [
+        { name: "Seattle Seahawks", price: 45.50 },
+        { name: "New England Patriots", price: 58.20 },
+        { name: "Denver Broncos", price: 42.00 },
+        { name: "Jacksonville Jaguars", price: 31.50 },
+        { name: "LA Rams", price: 49.00 },
+        { name: "Houston Texans", price: 36.80 },
+        { name: "Buffalo Bills", price: 48.30 },
+        { name: "Philadelphia Eagles", price: 55.40 },
+        { name: "Pittsburgh Steelers", price: 52.10 },
+        { name: "San Francisco 49ers", price: 59.00 },
+        { name: "Chicago Bears", price: 44.20 },
+        { name: "Green Bay Packers", price: 53.60 },
+        { name: "Minnesota Vikings", price: 41.90 },
+        { name: "Detroit Lions", price: 39.50 },
+        { name: "Dallas Cowboys", price: 65.00 },
+        { name: "Baltimore Ravens", price: 50.80 },
+        { name: "LA Chargers", price: 43.10 },
+        { name: "Kansas City Chiefs", price: 62.50 },
+        { name: "Miami Dolphins", price: 46.70 },
+        { name: "Cleveland Browns", price: 35.40 },
+        { name: "Cincinnati Bengals", price: 47.90 },
+        { name: "Washington Commanders", price: 38.20 },
+        { name: "New York Giants", price: 45.00 },
+        { name: "Tampa Bay Buccaneers", price: 44.60 },
+        { name: "Carolina Panthers", price: 30.20 },
+        { name: "Atlanta Falcons", price: 37.50 },
+        { name: "New Orleans Saints", price: 40.10 },
+        { name: "Indianapolis Colts", price: 38.90 },
+        { name: "Arizona Cardinals", price: 33.40 },
+        { name: "Las Vegas Raiders", price: 42.80 }
     ],
-    basketball: [
-        { name: "Boston Celtics", base: 195.00 },
-        { name: "Denver Nuggets", base: 185.00 },
-        { name: "Oklahoma City Thunder", base: 175.00 },
-        { name: "Los Angeles Lakers", base: 190.00 },
-        { name: "Golden State Warriors", base: 180.00 },
-        { name: "Dallas Mavericks", base: 165.00 },
-        { name: "Milwaukee Bucks", base: 170.00 },
-        { name: "Minnesota Timberwolves", base: 155.00 },
-        { name: "New York Knicks", base: 160.00 },
-        { name: "San Antonio Spurs", base: 140.00 },
-        { name: "Miami Heat", base: 145.00 },
-        { name: "Cleveland Cavaliers", base: 150.00 },
-        { name: "Philadelphia 76ers", base: 155.00 },
-        { name: "Phoenix Suns", base: 160.00 },
-        { name: "Sacramento Kings", base: 125.00 },
-        { name: "Indiana Pacers", base: 130.00 },
-        { name: "Orlando Magic", base: 120.00 },
-        { name: "Houston Rockets", base: 110.00 },
-        { name: "Chicago Bulls", base: 115.00 },
-        { name: "Atlanta Hawks", base: 105.00 },
-        { name: "Brooklyn Nets", base: 95.00 },
-        { name: "Toronto Raptors", base: 100.00 },
-        { name: "Memphis Grizzlies", base: 125.00 },
-        { name: "New Orleans Pelicans", base: 120.00 },
-        { name: "Utah Jazz", base: 90.00 },
-        { name: "Portland Trail Blazers", base: 85.00 },
-        { name: "Detroit Pistons", base: 70.00 },
-        { name: "Washington Wizards", base: 65.00 },
-        { name: "Charlotte Hornets", base: 75.00 }
+    "NBA": [
+        { name: "Oklahoma City Thunder", price: 52.00 },
+        { name: "San Antonio Spurs", price: 48.50 },
+        { name: "Denver Nuggets", price: 55.00 },
+        { name: "Los Angeles Lakers", price: 78.40 },
+        { name: "Houston Rockets", price: 44.10 },
+        { name: "Detroit Pistons", price: 32.00 },
+        { name: "Boston Celtics", price: 74.20 },
+        { name: "New York Knicks", price: 68.00 },
+        { name: "Cleveland Cavaliers", price: 49.30 },
+        { name: "Toronto Raptors", price: 41.50 },
+        { name: "Golden State Warriors", price: 82.00 },
+        { name: "Miami Heat", price: 58.60 },
+        { name: "Philadelphia 76ers", price: 54.20 },
+        { name: "Milwaukee Bucks", price: 60.10 },
+        { name: "Chicago Bulls", price: 47.80 },
+        { name: "Dallas Mavericks", price: 63.50 },
+        { name: "Phoenix Suns", price: 51.90 },
+        { name: "Memphis Grizzlies", price: 39.40 },
+        { name: "Sacramento Kings", price: 37.20 },
+        { name: "Minnesota Timberwolves", price: 45.60 },
+        { name: "Atlanta Hawks", price: 38.00 },
+        { name: "Brooklyn Nets", price: 43.80 },
+        { name: "Charlotte Hornets", price: 29.50 },
+        { name: "Indiana Pacers", price: 40.20 },
+        { name: "Orlando Magic", price: 35.70 },
+        { name: "Utah Jazz", price: 33.10 },
+        { name: "Portland Trail Blazers", price: 31.80 },
+        { name: "New Orleans Pelicans", price: 36.90 },
+        { name: "Washington Wizards", price: 28.40 }
     ],
-    nfl: [
-        { name: "Kansas City Chiefs", base: 210.00 },
-        { name: "San Francisco 49ers", base: 195.00 },
-        { name: "Philadelphia Eagles", base: 185.00 },
-        { name: "Baltimore Ravens", base: 180.00 },
-        { name: "Detroit Lions", base: 170.00 },
-        { name: "Buffalo Bills", base: 175.00 },
-        { name: "Dallas Cowboys", base: 180.00 },
-        { name: "Green Bay Packers", base: 155.00 }
+    "NHL": [
+        { name: "Carolina Hurricanes", price: 41.00 },
+        { name: "Colorado Avalanche", price: 54.20 },
+        { name: "Vegas Golden Knights", price: 51.50 },
+        { name: "Buffalo Sabres", price: 32.40 },
+        { name: "Tampa Bay Lightning", price: 56.80 },
+        { name: "Montreal Canadiens", price: 45.00 },
+        { name: "Dallas Stars", price: 44.70 },
+        { name: "Minnesota Wild", price: 39.10 }
     ],
-    nhl: [
-        { name: "Florida Panthers", base: 180.00 },
-        { name: "Edmonton Oilers", base: 175.00 },
-        { name: "Colorado Avalanche", base: 170.00 },
-        { name: "Rangers New York", base: 165.00 },
-        { name: "Dallas Stars", base: 160.00 }
-    ],
-    formula1: [
-        { name: "Red Bull Racing", base: 230.00 },
-        { name: "Ferrari F1 Team", base: 220.00 },
-        { name: "Mercedes AMG F1", base: 210.00 },
-        { name: "McLaren F1", base: 195.00 },
-        { name: "Aston Martin F1", base: 160.00 },
-        { name: "Max Verstappen", base: 240.00 },
-        { name: "Lewis Hamilton", base: 215.00 },
-        { name: "Charles Leclerc", base: 205.00 },
-        { name: "Lando Norris", base: 190.00 }
-    ],
-    players: [
-        { name: "Kylian Mbappe", base: 220.00 },
-        { name: "Erling Haaland", base: 215.00 },
-        { name: "Jude Bellingham", base: 205.00 },
-        { name: "Vinicius Junior", base: 200.00 },
-        { name: "Lamine Yamal", base: 190.00 },
-        { name: "Nikola Jokic", base: 210.00 },
-        { name: "Luka Doncic", base: 205.00 },
-        { name: "Giannis Antetokounmpo", base: 195.00 },
-        { name: "Shai Gilgeous-Alexander", base: 190.00 },
-        { name: "Victor Wembanyama", base: 200.00 },
-        { name: "Lionel Messi", base: 175.00 },
-        { name: "Cristiano Ronaldo", base: 170.00 }
+    "F1": [
+        { name: "Max Verstappen (Red Bull)", price: 85.00 },
+        { name: "Lewis Hamilton (Ferrari)", price: 80.00 },
+        { name: "Charles Leclerc (Ferrari)", price: 72.50 },
+        { name: "Lando Norris (McLaren)", price: 75.00 },
+        { name: "Oscar Piastri (McLaren)", price: 68.00 },
+        { name: "George Russell (Mercedes)", price: 62.00 },
+        { name: "Fernando Alonso (Aston Martin)", price: 55.00 }
     ]
 };
 
-let currentCategory = 'football';
-let marketData = {};
-
-// Global function linked to HTML buttons
-window.showCategory = function(category, btnElement) {
-    currentCategory = category;
-    
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    if (btnElement) {
-        btnElement.classList.add('active');
-    }
-    
-    renderMarket();
-};
-
-async function initDatabase() {
-    const dbRef = ref(db, 'market');
-    const snapshot = await get(dbRef);
-    if (!snapshot.exists()) {
-        let initialData = {};
-        for (const [category, items] of Object.entries(categories)) {
-            initialData[category] = items.map(item => ({
-                name: item.name,
-                price: item.base,
-                prevPrice: item.base,
-                history: [item.base, item.base]
-            }));
-        }
-        await set(dbRef, initialData);
-    }
-}
-
-function listenToMarket() {
-    const dbRef = ref(db, 'market');
-    onValue(dbRef, (snapshot) => {
-        if (snapshot.exists()) {
-            marketData = snapshot.val();
-            renderMarket();
-        }
-    });
-}
-
 function renderMarket() {
-    const container = document.getElementById('stocks') || document.getElementById('marketContainer') || document.getElementById('assetsGrid');
-    if (!container) return;
+    let container = document.getElementById('market-container');
+    if (!container) {
+        // Ако го нема во HTML, го креираме автоматски под Live Spot Markets
+        container = document.createElement('div');
+        container.id = 'market-container';
+        container.style.cssText = "padding: 20px; color: #fff; max-width: 1200px; margin: 0 auto;";
+        document.body.appendChild(container);
+    }
     
     container.innerHTML = '';
-    const items = marketData[currentCategory] || [];
 
-    items.forEach(item => {
-        const isUp = item.price >= (item.prevPrice || item.price);
-        const colorClass = isUp ? 'color: #0ecb81;' : 'color: #f6465d;';
-        const sign = isUp ? '+' : '';
-        const diff = (item.price - (item.prevPrice || item.price)).toFixed(2);
-
-        const card = document.createElement('div');
-        card.className = 'market-card';
-        card.style.cssText = 'background: #151a21; border: 1px solid #262d37; padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between;';
+    for (const [category, items] of Object.entries(sportData)) {
+        let section = document.createElement('div');
+        section.style.cssText = "margin-bottom: 30px;";
         
-        card.innerHTML = `
-            <div>
-                <div style="font-weight: 600; font-size: 16px; color: #eaecef; margin-bottom: 4px;">${item.name}</div>
-                <div style="font-size: 11px; color: #848e9c; text-transform: uppercase; letter-spacing: 0.5px;">OTC Token Unit</div>
-            </div>
-            <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: flex-end;">
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: #eaecef;">
-                    ${item.price.toFixed(2)} USDT
-                </div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; ${colorClass}">
-                    ${sign}${diff}
-                </div>
-            </div>
-        `;
-        container.appendChild(card);
-    });
+        let heading = document.createElement('h2');
+        heading.innerText = category;
+        heading.style.cssText = "color: #00ffcc; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px;";
+        section.appendChild(heading);
+
+        let grid = document.createElement('div');
+        grid.style.cssText = "display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px;";
+
+        items.forEach((item, index) => {
+            let card = document.createElement('div');
+            card.style.cssText = "background: #1a1a2e; border: 1px solid #333; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;";
+            
+            card.innerHTML = `
+                <span style="font-weight: bold; margin-bottom: 10px; font-size: 15px;">${item.name}</span>
+                <span id="price-${category}-${index}" style="color: #00ffcc; font-size: 18px; font-family: monospace;">${item.price.toFixed(2)} USDT</span>
+            `;
+            grid.appendChild(card);
+        });
+
+        section.appendChild(grid);
+        container.appendChild(section);
+    }
 }
 
-function simulateFreeMarket() {
-    const dbRef = ref(db, 'market');
-    get(dbRef).then((snapshot) => {
-        if (!snapshot.exists()) return;
-        let data = snapshot.val();
-
-        for (const category in data) {
-            data[category].forEach(item => {
-                item.prevPrice = item.price;
-                let percentChange = (Math.random() * 5 - 2.48) / 100;
-                item.price = item.price * (1 + percentChange);
-                if (item.price < 1.00) item.price = 1.00;
-                item.price = parseFloat(item.price.toFixed(2));
-
-                if (!item.history) item.history = [];
-                item.history.push(item.price);
-                if (item.history.length > 15) {
-                    item.history.shift();
+function startSimulation() {
+    setInterval(() => {
+        for (const category in sportData) {
+            sportData[category].forEach((item, index) => {
+                const change = (Math.random() * 5 - 2.45) / 100;
+                item.price = Math.max(1.00, item.price * (1 + change));
+                const el = document.getElementById(`price-${category}-${index}`);
+                if (el) {
+                    el.innerText = `${item.price.toFixed(2)} USDT`;
+                    el.style.color = change >= 0 ? "#00ffcc" : "#ff4d4d";
                 }
             });
         }
-        set(dbRef, data);
-    });
+    }, 3000);
 }
 
-initDatabase().then(() => {
-    listenToMarket();
-    setInterval(simulateFreeMarket, 5000);
+window.addEventListener('DOMContentLoaded', () => {
+    renderMarket();
+    startSimulation();
 });
