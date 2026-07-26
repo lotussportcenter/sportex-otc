@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Иницијални категории со слободни цени (без min/max граници)
+// Иницијални категории со почетни базични вредности (слободен пазар без лимити)
 const categories = {
     football: [
         { name: "Real Madrid", base: 185.50 },
@@ -119,7 +119,7 @@ const categories = {
     ]
 };
 
-// Функция за иницијализација на податоците во Firebase доколку веќе не постојат
+// Иницијализација на податоците во базата доколку нема запис
 async function initDatabase() {
     const dbRef = ref(db, 'market');
     const snapshot = await get(dbRef);
@@ -138,10 +138,10 @@ async function initDatabase() {
 
 initDatabase();
 
-// Пазарна логика за слободно движење без лимити (се извршува на секои неколку секунди)
+// Функция за слободно движење на пазарот
 function simulateFreeMarket() {
     const dbRef = ref(db, 'market');
-    get(dbRef).snapshot ? null : get(dbRef).then((snapshot) => {
+    get(dbRef).then((snapshot) => {
         if (!snapshot.exists()) return;
         let data = snapshot.val();
 
@@ -149,11 +149,11 @@ function simulateFreeMarket() {
             data[category].forEach(item => {
                 item.prevPrice = item.price;
                 
-                // Случаен процент на промена (од -2.5% до +2.5%) со целосно слободен пазар
+                // Случаен процент на слободна промена
                 let percentChange = (Math.random() * 5 - 2.48) / 100;
                 item.price = item.price * (1 + percentChange);
                 
-                // Заштита само да не отиде во минус или нула
+                // Минимален заштитен праг за да не отиде под 1.00 USDT
                 if (item.price < 1.00) item.price = 1.00;
                 
                 item.price = parseFloat(item.price.toFixed(2));
@@ -162,6 +162,3 @@ function simulateFreeMarket() {
         set(dbRef, data);
     });
 }
-
-// Можеш да го вклучиш автоматското движење на пазарот по желба
-// setInterval(simulateFreeMarket, 5000);
