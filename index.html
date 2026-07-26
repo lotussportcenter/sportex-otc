@@ -125,6 +125,16 @@
         <p>© 2026 SportEx Global OTC Exchange. All rights reserved. Professional Institutional Trading Services.</p>
     </footer>
 
+    <!-- Security: Block Right Click & Inspect -->
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) {
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73) || (e.ctrlKey && e.keyCode == 85)) {
+                return false;
+            }
+        }
+    </script>
+
     <script type="module" src="app.js"></script>
 </body>
 </html>
