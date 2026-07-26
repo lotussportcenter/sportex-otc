@@ -15,7 +15,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Иницијални категории со почетни базични вредности (слободен пазар без лимити)
 const categories = {
     football: [
         { name: "Real Madrid", base: 185.50 },
@@ -119,7 +118,6 @@ const categories = {
     ]
 };
 
-// Иницијализација на податоците во базата доколку нема запис
 async function initDatabase() {
     const dbRef = ref(db, 'market');
     const snapshot = await get(dbRef);
@@ -129,7 +127,8 @@ async function initDatabase() {
             initialData[category] = items.map(item => ({
                 name: item.name,
                 price: item.base,
-                prevPrice: item.base
+                prevPrice: item.base,
+                history: [item.base, item.base] // Иницијална историја за свеќите
             }));
         }
         await set(dbRef, initialData);
@@ -138,7 +137,7 @@ async function initDatabase() {
 
 initDatabase();
 
-// Функция за слободно движење на пазарот
+// Функция за слободно движење на пазарот со ажурирање на историјата за свеќите
 function simulateFreeMarket() {
     const dbRef = ref(db, 'market');
     get(dbRef).then((snapshot) => {
@@ -153,12 +152,21 @@ function simulateFreeMarket() {
                 let percentChange = (Math.random() * 5 - 2.48) / 100;
                 item.price = item.price * (1 + percentChange);
                 
-                // Минимален заштитен праг за да не отиде под 1.00 USDT
+                // Минимален заштитен праг
                 if (item.price < 1.00) item.price = 1.00;
-                
                 item.price = parseFloat(item.price.toFixed(2));
+
+                // Следење на историјата за свеќите (чува последни 15 ценовни точки)
+                if (!item.history) item.history = [];
+                item.history.push(item.price);
+                if (item.history.length > 15) {
+                    item.history.shift();
+                }
             });
         }
         set(dbRef, data);
     });
 }
+
+// Извршување на движењето на секои 5 секунди
+setInterval(simulateFreeMarket, 5000);
