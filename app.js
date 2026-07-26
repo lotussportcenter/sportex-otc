@@ -132,6 +132,18 @@ const categories = {
 let currentCategory = 'football';
 let marketData = {};
 
+// Global function linked to HTML buttons
+window.showCategory = function(category, btnElement) {
+    currentCategory = category;
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (btnElement) {
+        btnElement.classList.add('active');
+    }
+    
+    renderMarket();
+};
+
 async function initDatabase() {
     const dbRef = ref(db, 'market');
     const snapshot = await get(dbRef);
@@ -160,7 +172,7 @@ function listenToMarket() {
 }
 
 function renderMarket() {
-    const container = document.getElementById('marketContainer') || document.getElementById('assetsGrid');
+    const container = document.getElementById('stocks') || document.getElementById('marketContainer') || document.getElementById('assetsGrid');
     if (!container) return;
     
     container.innerHTML = '';
